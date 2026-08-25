@@ -1,11 +1,11 @@
-function readVars(el, names) {
+export function readVars(el, names) {
   const style = getComputedStyle(el);
   const out = {};
   for (const name of names) out[name] = style.getPropertyValue(name).trim();
   return out;
 }
 
-function setupCanvasDPR(canvas) {
+export function setupCanvasDPR(canvas) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect.width));
@@ -19,7 +19,7 @@ function setupCanvasDPR(canvas) {
   return { ctx, width, height };
 }
 
-function niceTicks(min, max, count) {
+export function niceTicks(min, max, count) {
   if (min === max) return [min];
   const range = max - min;
   const rawStep = range / count;
@@ -237,9 +237,13 @@ export class LineChart {
 }
 
 export class BarChart {
-  constructor(canvas, tooltipEl) {
+  /**
+   * data items: { label: string, value: number, color?: cssVarName, tip?: string }
+   */
+  constructor(canvas, tooltipEl, options = {}) {
     this.canvas = canvas;
     this.tooltipEl = tooltipEl;
+    this.options = options;
     this.data = [];
     this._onMove = this._onMove.bind(this);
     this._onLeave = this._onLeave.bind(this);
@@ -265,6 +269,10 @@ export class BarChart {
       "--gridline",
       "--baseline",
       "--series-1",
+      "--series-2",
+      "--series-3",
+      "--series-4",
+      "--good",
     ]);
 
     if (!this.data.length) {
@@ -272,7 +280,7 @@ export class BarChart {
       return;
     }
 
-    const maxVal = Math.max(...this.data.map((d) => d.steps));
+    const maxVal = Math.max(...this.data.map((d) => d.value));
     const yTicks = niceTicks(0, maxVal, 5);
     const pad = { ...BASE_PAD, left: measureLeftPad(ctx, yTicks) };
     const plotW = width - pad.left - pad.right;
@@ -298,16 +306,16 @@ export class BarChart {
     const barW = Math.min(24, slot * 0.7);
     const gap = 2;
 
-    ctx.fillStyle = vars["--series-1"];
     const bars = [];
     this.data.forEach((d, i) => {
       const cx = pad.left + slot * (i + 0.5);
-      const barH = (d.steps / (maxVal || 1)) * plotH;
+      const barH = (d.value / (maxVal || 1)) * plotH;
       const x = cx - barW / 2 + gap / 2;
       const w = barW - gap;
       const yTop = pad.top + plotH - barH;
       const r = Math.min(4, w / 2);
 
+      ctx.fillStyle = vars[d.color || "--series-1"] || vars["--series-1"];
       ctx.beginPath();
       ctx.moveTo(x, yTop + r);
       ctx.arcTo(x, yTop, x + r, yTop, r);
@@ -318,8 +326,20 @@ export class BarChart {
       ctx.closePath();
       ctx.fill();
 
-      bars.push({ x: cx - slot / 2, w: slot, ...d });
+      bars.push({ x: cx - slot / 2, w: slot, cx, datum: d });
     });
+
+    // category labels under each bar, only when they comfortably fit
+    if (this.options.xLabels) {
+      ctx.fillStyle = vars["--muted"];
+      ctx.font = TICK_FONT;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const fits = bars.every((b) => ctx.measureText(b.datum.label).width < slot - 6);
+      if (fits) {
+        for (const b of bars) ctx.fillText(b.datum.label, b.cx, pad.top + plotH + 8);
+      }
+    }
 
     // baseline
     ctx.strokeStyle = vars["--baseline"];
@@ -340,7 +360,11 @@ export class BarChart {
       this.tooltipEl.style.display = "none";
       return;
     }
-    this.tooltipEl.innerHTML = `<div class="tt-title">開始値 ${bar.start.toLocaleString("en-US")}</div>ステップ数: ${bar.steps.toLocaleString("en-US")}`;
+    const d = bar.datum;
+    const body = this.options.tooltip
+      ? this.options.tooltip(d)
+      : `<div class="tt-title">${d.label}</div>${d.value.toLocaleString("en-US")}`;
+    this.tooltipEl.innerHTML = body;
     this.tooltipEl.style.display = "block";
     this.tooltipEl.style.left = `${evt.clientX - rect.left + 12}px`;
     this.tooltipEl.style.top = `${evt.clientY - rect.top + 12}px`;

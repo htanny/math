@@ -3,133 +3,435 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>コラッツ予想エクスプローラー</title>
-    <meta name="description" content="コラッツ予想（3n+1問題）の数列をアニメーションで可視化するインタラクティブツール" />
+    <title>数学エクスプローラー</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta
+      name="description"
+      content="コラッツ予想・アリコット数列・ロジスティック写像・円の掛け算表を、アニメーションとグラフで探索するインタラクティブツール"
+    />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <div class="app">
       <header class="app-header">
         <div class="title-row">
-          <h1>コラッツ予想エクスプローラー</h1>
+          <h1>数学エクスプローラー</h1>
           <button id="themeToggle" class="icon-btn" type="button" aria-label="ダーク/ライト切替" title="ダーク/ライト切替">
             <span id="themeIcon">🌙</span>
           </button>
         </div>
-        <p class="subtitle">
-          任意の正の整数から出発し、偶数なら2で割り、奇数なら3倍して1を足す — を繰り返すと、
-          いつか必ず1に到達する、という未解決のコラッツ予想（3n+1問題）を体感できます。
-        </p>
+        <nav class="tabs" aria-label="テーマ切替">
+          <button type="button" class="tab" data-view="collatz">コラッツ予想</button>
+          <button type="button" class="tab" data-view="aliquot">アリコット数列</button>
+          <button type="button" class="tab" data-view="logistic">ロジスティック写像</button>
+          <button type="button" class="tab" data-view="modmul">円の掛け算表</button>
+        </nav>
       </header>
 
       <main>
-        <section class="panel" aria-labelledby="playHeading">
-          <h2 id="playHeading">数列を計算する</h2>
+        <!-- ============================ コラッツ予想 ============================ -->
+        <section class="view" data-view="collatz" hidden>
+          <p class="subtitle">
+            任意の正の整数から出発し、偶数なら2で割り、奇数なら3倍して1を足す — を繰り返すと、
+            いつか必ず1に到達する、という未解決のコラッツ予想（3n+1問題）を体感できます。
+          </p>
 
-          <form id="startForm" class="controls-row">
-            <label class="field">
-              <span>開始する数</span>
-              <input id="startInput" type="number" min="1" step="1" value="27" inputmode="numeric" required />
-            </label>
-            <button type="submit" class="btn btn-primary">計算してみる</button>
-            <button type="button" id="randomBtn" class="btn">ランダム</button>
-          </form>
+          <section class="panel" aria-labelledby="playHeading">
+            <h2 id="playHeading">数列を計算する</h2>
 
-          <div class="preset-row" role="group" aria-label="有名な開始値のプリセット">
-            <span class="preset-label">試してみる:</span>
-            <button type="button" class="chip" data-preset="27">27</button>
-            <button type="button" class="chip" data-preset="97">97</button>
-            <button type="button" class="chip" data-preset="703">703</button>
-            <button type="button" class="chip" data-preset="6171">6171</button>
-            <button type="button" class="chip" data-preset="837799">837799</button>
-          </div>
+            <form id="startForm" class="controls-row">
+              <label class="field">
+                <span>開始する数</span>
+                <input id="startInput" type="number" min="1" step="1" value="27" inputmode="numeric" required />
+              </label>
+              <button type="submit" class="btn btn-primary">計算してみる</button>
+              <button type="button" id="randomBtn" class="btn">ランダム</button>
+            </form>
 
-          <div class="controls-row secondary-row">
-            <label class="field field-inline">
-              <span>再生速度</span>
-              <select id="speedSelect">
-                <option value="400">遅い</option>
-                <option value="120" selected>ふつう</option>
-                <option value="40">速い</option>
-                <option value="0">瞬時</option>
-              </select>
-            </label>
-            <label class="field field-inline checkbox-field">
-              <input id="logScaleToggle" type="checkbox" />
-              <span>対数スケール</span>
-            </label>
-            <button type="button" id="pauseBtn" class="btn" disabled>一時停止</button>
-            <button type="button" id="compareBtn" class="btn" disabled>この数列を比較に固定</button>
-            <button type="button" id="clearCompareBtn" class="btn btn-ghost" disabled>比較をクリア</button>
-          </div>
+            <div class="preset-row" role="group" aria-label="有名な開始値のプリセット">
+              <span class="preset-label">試してみる:</span>
+              <button type="button" class="chip" data-preset="27">27</button>
+              <button type="button" class="chip" data-preset="97">97</button>
+              <button type="button" class="chip" data-preset="703">703</button>
+              <button type="button" class="chip" data-preset="6171">6171</button>
+              <button type="button" class="chip" data-preset="837799">837799</button>
+            </div>
 
-          <div class="ticker" id="ticker" aria-live="polite">
-            <div class="ticker-value">
-              <span class="ticker-label">現在の値</span>
-              <span id="tickerValue" class="ticker-number">—</span>
+            <div class="controls-row secondary-row">
+              <label class="field field-inline">
+                <span>再生速度</span>
+                <select id="speedSelect">
+                  <option value="400">遅い</option>
+                  <option value="120" selected>ふつう</option>
+                  <option value="40">速い</option>
+                  <option value="0">瞬時</option>
+                </select>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="logScaleToggle" type="checkbox" />
+                <span>対数スケール</span>
+              </label>
+              <button type="button" id="pauseBtn" class="btn" disabled>一時停止</button>
+              <button type="button" id="compareBtn" class="btn" disabled>この数列を比較に固定</button>
+              <button type="button" id="clearCompareBtn" class="btn btn-ghost" disabled>比較をクリア</button>
             </div>
-            <div class="ticker-step">
-              <span class="ticker-label">ステップ</span>
-              <span id="tickerStep" class="ticker-number ticker-number-sm">—</span>
-            </div>
-          </div>
 
-          <div class="chart-wrap">
-            <canvas id="lineChart" aria-label="コラッツ数列の推移グラフ" role="img"></canvas>
-            <div id="lineTooltip" class="chart-tooltip" style="display: none"></div>
-          </div>
-          <div id="compareLegend" class="legend" aria-live="polite"></div>
+            <div class="ticker" id="ticker" aria-live="polite">
+              <div class="ticker-value">
+                <span class="ticker-label">現在の値</span>
+                <span id="tickerValue" class="ticker-number">—</span>
+              </div>
+              <div class="ticker-step">
+                <span class="ticker-label">ステップ</span>
+                <span id="tickerStep" class="ticker-number ticker-number-sm">—</span>
+              </div>
+            </div>
 
-          <div class="stats-row" id="statsRow">
-            <div class="stat-tile">
-              <span class="stat-label">ステップ数</span>
-              <span id="statSteps" class="stat-value">—</span>
+            <div class="chart-wrap">
+              <canvas id="lineChart" aria-label="コラッツ数列の推移グラフ" role="img"></canvas>
+              <div id="lineTooltip" class="chart-tooltip" style="display: none"></div>
             </div>
-            <div class="stat-tile">
-              <span class="stat-label">最大値</span>
-              <span id="statMax" class="stat-value">—</span>
+            <div id="compareLegend" class="legend" aria-live="polite"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">ステップ数</span>
+                <span id="statSteps" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大値</span>
+                <span id="statMax" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大値到達ステップ</span>
+                <span id="statMaxStep" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">状態</span>
+                <span id="statStatus" class="stat-value">—</span>
+              </div>
             </div>
-            <div class="stat-tile">
-              <span class="stat-label">最大値到達ステップ</span>
-              <span id="statMaxStep" class="stat-value">—</span>
+          </section>
+
+          <section class="panel" aria-labelledby="recordHeading">
+            <h2 id="recordHeading">記録数列を探す</h2>
+            <p class="panel-desc">
+              1から指定した上限までの整数のうち、そこまでで最もステップ数が長かった「記録更新」の開始値を探索します。
+            </p>
+            <form id="rangeForm" class="controls-row">
+              <label class="field">
+                <span>探索する上限</span>
+                <input id="rangeInput" type="number" min="10" max="200000" step="1" value="10000" inputmode="numeric" />
+              </label>
+              <button type="submit" class="btn btn-primary">探索する</button>
+            </form>
+            <div class="chart-wrap">
+              <canvas id="barChart" aria-label="記録更新した開始値とステップ数の棒グラフ" role="img"></canvas>
+              <div id="barTooltip" class="chart-tooltip" style="display: none"></div>
             </div>
-            <div class="stat-tile">
-              <span class="stat-label">状態</span>
-              <span id="statStatus" class="stat-value">—</span>
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">最長ステップ数</span>
+                <span id="rangeBestSteps" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">その開始値</span>
+                <span id="rangeBestStart" class="stat-value">—</span>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
 
-        <section class="panel" aria-labelledby="recordHeading">
-          <h2 id="recordHeading">記録数列を探す</h2>
-          <p class="panel-desc">1から指定した上限までの整数のうち、そこまでで最もステップ数が長かった「記録更新」の開始値を探索します。</p>
-          <form id="rangeForm" class="controls-row">
-            <label class="field">
-              <span>探索する上限</span>
-              <input id="rangeInput" type="number" min="10" max="200000" step="1" value="10000" inputmode="numeric" />
-            </label>
-            <button type="submit" class="btn btn-primary">探索する</button>
-          </form>
-          <div class="chart-wrap">
-            <canvas id="barChart" aria-label="記録更新した開始値とステップ数の棒グラフ" role="img"></canvas>
-            <div id="barTooltip" class="chart-tooltip" style="display: none"></div>
-          </div>
-          <div class="stats-row">
-            <div class="stat-tile">
-              <span class="stat-label">最長ステップ数</span>
-              <span id="rangeBestSteps" class="stat-value">—</span>
+        <!-- ============================ アリコット数列 ============================ -->
+        <section class="view" data-view="aliquot" hidden>
+          <p class="subtitle">
+            その数の「自分自身を除く約数の和」を繰り返します。<code>276 → 396 → 696 → …</code>
+            この数列が必ず1に到達するか循環するか、それとも無限に大きくなり続けるか —
+            <strong>カタラン・ディクソン予想</strong>として未解決です。276 は2000項以上・200桁を超えても決着していません。
+          </p>
+
+          <section class="panel" aria-labelledby="alqHeading">
+            <h2 id="alqHeading">数列を計算する</h2>
+
+            <form id="alqForm" class="controls-row">
+              <label class="field">
+                <span>開始する数</span>
+                <input id="alqInput" type="number" min="1" step="1" value="220" inputmode="numeric" required />
+              </label>
+              <button type="submit" class="btn btn-primary">計算してみる</button>
+              <button type="button" id="alqRandomBtn" class="btn">ランダム</button>
+            </form>
+
+            <div class="preset-row" role="group" aria-label="有名な開始値のプリセット">
+              <span class="preset-label">試してみる:</span>
+              <button type="button" class="chip" data-alq="12" title="素数に落ちて終端">12</button>
+              <button type="button" class="chip" data-alq="6" title="完全数">6</button>
+              <button type="button" class="chip" data-alq="28" title="完全数">28</button>
+              <button type="button" class="chip" data-alq="220" title="友愛数">220</button>
+              <button type="button" class="chip" data-alq="12496" title="社交数（5周期）">12496</button>
+              <button type="button" class="chip" data-alq="138" title="大きく膨らんでから終端">138</button>
+              <button type="button" class="chip chip-accent" data-alq="276" title="未解決のまま残る開始値">276</button>
             </div>
-            <div class="stat-tile">
-              <span class="stat-label">その開始値</span>
-              <span id="rangeBestStart" class="stat-value">—</span>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline">
+                <span>再生速度</span>
+                <select id="alqSpeed">
+                  <option value="400">遅い</option>
+                  <option value="120" selected>ふつう</option>
+                  <option value="40">速い</option>
+                  <option value="0">瞬時</option>
+                </select>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="alqLogToggle" type="checkbox" checked />
+                <span>対数スケール</span>
+              </label>
+              <button type="button" id="alqPauseBtn" class="btn" disabled>一時停止</button>
             </div>
-          </div>
+
+            <div class="ticker" id="alqTicker" aria-live="polite">
+              <div class="ticker-value">
+                <span class="ticker-label">現在の値</span>
+                <span id="alqTickerValue" class="ticker-number">—</span>
+              </div>
+              <div class="ticker-step">
+                <span class="ticker-label">ステップ</span>
+                <span id="alqTickerStep" class="ticker-number ticker-number-sm">—</span>
+              </div>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="alqChart" aria-label="アリコット数列の推移グラフ" role="img"></canvas>
+              <div id="alqTooltip" class="chart-tooltip" style="display: none"></div>
+            </div>
+
+            <div id="alqCycle" class="cycle-box" hidden></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">ステップ数</span>
+                <span id="alqSteps" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大値</span>
+                <span id="alqMax" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大値到達ステップ</span>
+                <span id="alqMaxStep" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">分類</span>
+                <span id="alqClass" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="alqScanHeading">
+            <h2 id="alqScanHeading">終わり方を数える</h2>
+            <p class="panel-desc">
+              1から指定した上限までの各整数についてアリコット数列をたどり、<strong>行き着く先</strong>で分類して集計します。
+              大半は1に落ちますが、完全数や友愛数の循環に吸い込まれる数がどれだけあるか、
+              そして計算を打ち切るしかない「未決着」がどれだけ現れるかが見えます。
+            </p>
+            <form id="alqScanForm" class="controls-row">
+              <label class="field">
+                <span>集計する上限</span>
+                <input id="alqScanInput" type="number" min="10" max="50000" step="1" value="10000" inputmode="numeric" />
+              </label>
+              <button type="submit" class="btn btn-primary">集計する</button>
+            </form>
+            <div class="chart-wrap">
+              <canvas id="alqScanChart" aria-label="アリコット数列の終わり方の分布" role="img"></canvas>
+              <div id="alqScanTooltip" class="chart-tooltip" style="display: none"></div>
+            </div>
+            <div id="alqScanNote" class="note"></div>
+          </section>
+        </section>
+
+        <!-- ============================ ロジスティック写像 ============================ -->
+        <section class="view" data-view="logistic" hidden>
+          <p class="subtitle">
+            <code>x → r·x(1−x)</code> という式ひとつだけ。パラメータ <em>r</em> を上げていくと、
+            一点に落ち着く → 2周期 → 4周期 → 8周期 → …と倍々に分岐し、やがてカオスに突入します。
+            単純な決定論的規則から予測不能性が生まれる、その瞬間を見る装置です。
+          </p>
+
+          <section class="panel" aria-labelledby="cobwebHeading">
+            <h2 id="cobwebHeading">蜘蛛の巣図でたどる</h2>
+            <p class="panel-desc">
+              放物線 <code>y = r·x(1−x)</code> と直線 <code>y = x</code> の間を往復させると、軌道が図形として見えます。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>r = <output id="rOut" class="mono">3.200</output></span>
+                <input id="rSlider" type="range" min="0" max="4" step="0.001" value="3.2" />
+              </label>
+              <label class="field field-grow">
+                <span>初期値 x₀ = <output id="x0Out" class="mono">0.200</output></span>
+                <input id="x0Slider" type="range" min="0.01" max="0.99" step="0.01" value="0.2" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="rのプリセット">
+              <span class="preset-label">rを合わせる:</span>
+              <button type="button" class="chip" data-r="2.6">2.6（1点に収束）</button>
+              <button type="button" class="chip" data-r="3.2">3.2（2周期）</button>
+              <button type="button" class="chip" data-r="3.5">3.5（4周期）</button>
+              <button type="button" class="chip" data-r="3.55">3.55（8周期）</button>
+              <button type="button" class="chip" data-r="3.628">3.628（6周期の窓）</button>
+              <button type="button" class="chip" data-r="3.9">3.9（カオス）</button>
+              <button type="button" class="chip chip-accent" data-r="3.83">3.83（3周期の窓）</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <button type="button" id="cobwebReplay" class="btn">最初から再生</button>
+              <label class="field field-inline">
+                <span>表示ステップ数</span>
+                <select id="cobwebSteps">
+                  <option value="30">30</option>
+                  <option value="60" selected>60</option>
+                  <option value="150">150</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="chart-grid">
+              <div class="chart-wrap square-ish">
+                <canvas id="cobwebChart" aria-label="ロジスティック写像の蜘蛛の巣図" role="img"></canvas>
+              </div>
+              <div class="chart-wrap square-ish">
+                <canvas id="timeChart" aria-label="ロジスティック写像の時系列" role="img"></canvas>
+                <div id="timeTooltip" class="chart-tooltip" style="display: none"></div>
+              </div>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">現在の r</span>
+                <span id="logStatR" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">周期</span>
+                <span id="logStatPeriod" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">落ち着く値</span>
+                <span id="logStatAttractor" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="bifHeading">
+            <h2 id="bifHeading">分岐図</h2>
+            <p class="panel-desc">
+              横軸が r、縦軸がその r で軌道が落ち着く値。<strong>ドラッグで範囲を選ぶとズーム</strong>できます。
+              拡大すると、全体と同じ枝分かれの形が何度でも現れます（自己相似）。
+            </p>
+            <div class="controls-row secondary-row">
+              <button type="button" id="bifReset" class="btn">全体に戻す</button>
+              <button type="button" class="btn" data-bifzoom="3.54,3.5715,0.44,0.60">周期倍分岐の集積点へ</button>
+              <button type="button" class="btn" data-bifzoom="3.826,3.858,0.13,0.98">3周期の窓へ</button>
+              <span id="bifRange" class="note note-inline"></span>
+            </div>
+            <div class="chart-wrap tall">
+              <canvas id="bifChart" aria-label="ロジスティック写像の分岐図" role="img"></canvas>
+            </div>
+
+            <h3 class="sub-heading">ファイゲンバウム定数</h3>
+            <p class="panel-desc">
+              周期が 2 → 4 → 8 → … と倍増する r の間隔は、一定の比率で縮んでいきます。
+              その比 δ は、写像の詳細によらない普遍定数 <strong>4.6692016…</strong> に収束します。
+            </p>
+            <div class="table-wrap">
+              <table class="data-table" id="feigTable">
+                <thead>
+                  <tr>
+                    <th>周期</th>
+                    <th>分岐する r</th>
+                    <th>間隔</th>
+                    <th>比 δ</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- ============================ 円の掛け算表 ============================ -->
+        <section class="view" data-view="modmul" hidden>
+          <p class="subtitle">
+            円周上に n 個の点を等間隔に並べ、点 <em>k</em> と点 <em>k×m mod n</em> を線で結ぶだけ。
+            それだけで m=2 に<strong>カージオイド</strong>、m=3 に<strong>ネフロイド</strong>が現れ、
+            m が1増えるごとに尖点がひとつ増えていきます。
+          </p>
+
+          <section class="panel" aria-labelledby="mmHeading">
+            <h2 id="mmHeading">掛け算の模様</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>点の数 n = <output id="mmNOut" class="mono">200</output></span>
+                <input id="mmN" type="range" min="10" max="720" step="1" value="200" />
+              </label>
+              <label class="field field-grow">
+                <span>倍率 m = <output id="mmMOut" class="mono">2.00</output></span>
+                <input id="mmM" type="range" min="1" max="120" step="0.01" value="2" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="倍率のプリセット">
+              <span class="preset-label">倍率:</span>
+              <button type="button" class="chip" data-m="2">2（カージオイド）</button>
+              <button type="button" class="chip" data-m="3">3（ネフロイド）</button>
+              <button type="button" class="chip" data-m="4">4</button>
+              <button type="button" class="chip" data-m="5">5</button>
+              <button type="button" class="chip" data-m="29">29</button>
+              <button type="button" class="chip" data-m="51">51</button>
+              <button type="button" class="chip" data-m="99">99</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <button type="button" id="mmPlay" class="btn btn-primary">アニメーション開始</button>
+              <label class="field field-inline">
+                <span>速さ</span>
+                <select id="mmSpeed">
+                  <option value="0.002">ゆっくり</option>
+                  <option value="0.008" selected>ふつう</option>
+                  <option value="0.03">速い</option>
+                </select>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="mmDots" type="checkbox" />
+                <span>円周の点を表示</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="mmChart" aria-label="円の掛け算表の模様" role="img"></canvas>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">尖点の数（整数mのとき）</span>
+                <span id="mmCusps" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">描いている線の数</span>
+                <span id="mmLines" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
         </section>
       </main>
 
       <footer class="app-footer">
         <p>
-          コラッツ予想は1937年にローター・コラッツが提示して以来、あらゆる正の整数で成り立つかどうか誰も証明できていません。
+          コラッツ予想・アリコット数列（カタラン・ディクソン予想）はいずれも未解決問題です。
+          ロジスティック写像と円の掛け算表は、単純な規則から複雑な構造が現れる例として並べています。
           このツールは学習・鑑賞用の可視化です。
         </p>
       </footer>
