@@ -25,6 +25,10 @@
           <button type="button" class="tab" data-view="aliquot">アリコット数列</button>
           <button type="button" class="tab" data-view="logistic">ロジスティック写像</button>
           <button type="button" class="tab" data-view="modmul">円の掛け算表</button>
+          <button type="button" class="tab" data-view="langton">ラングトンのアリ</button>
+          <button type="button" class="tab" data-view="goldbach">ゴールドバッハ</button>
+          <button type="button" class="tab" data-view="continued">連分数と向日葵</button>
+          <button type="button" class="tab" data-view="zeta">ゼータ零点と素数</button>
         </nav>
       </header>
 
@@ -424,6 +428,252 @@
                 <span id="mmLines" class="stat-value">—</span>
               </div>
             </div>
+          </section>
+        </section>
+        <!-- ============================ ラングトンのアリ ============================ -->
+        <section class="view" data-view="langton" hidden>
+          <p class="subtitle">
+            白いマスなら右に曲がり、黒いマスなら左に曲がる。曲がったらそのマスの色を変えて1歩進む — 規則はこれだけ。
+            それでも約1万歩は完全に無秩序な動きが続き、そこから<strong>突然「高速道路」を作って一直線に走り出します</strong>。
+            なぜそうなるのか、一般には証明されていません。
+          </p>
+
+          <section class="panel" aria-labelledby="ltHeading">
+            <h2 id="ltHeading">蟻を歩かせる</h2>
+
+            <div class="controls-row">
+              <label class="field">
+                <span>ルール（L と R の並び）</span>
+                <input id="ltRule" type="text" value="RL" spellcheck="false" autocomplete="off" />
+              </label>
+              <label class="field field-inline">
+                <span>盤面</span>
+                <select id="ltSize">
+                  <option value="301">301 × 301</option>
+                  <option value="501" selected>501 × 501</option>
+                  <option value="701">701 × 701</option>
+                </select>
+              </label>
+              <label class="field field-inline">
+                <span>速さ</span>
+                <select id="ltSpeed">
+                  <option value="1">1歩ずつ</option>
+                  <option value="20">ふつう</option>
+                  <option value="200" selected>速い</option>
+                  <option value="2000">とても速い</option>
+                </select>
+              </label>
+              <button type="button" id="ltPlay" class="btn btn-primary">再生</button>
+              <button type="button" id="ltReset" class="btn">リセット</button>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="ルールのプリセット">
+              <span class="preset-label">ルール:</span>
+              <span id="ltPresets" class="preset-chips"></span>
+            </div>
+
+            <p id="ltNote" class="note"></p>
+
+            <div class="chart-wrap square">
+              <canvas id="ltCanvas" aria-label="ラングトンのアリの盤面" role="img"></canvas>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">ステップ数</span>
+                <span id="ltSteps" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">色のついたマス</span>
+                <span id="ltPainted" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">状態</span>
+                <span id="ltState" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ============================ ゴールドバッハ ============================ -->
+        <section class="view" data-view="goldbach" hidden>
+          <p class="subtitle">
+            「2より大きい偶数はすべて2つの素数の和で書ける」— 1742年にゴールドバッハが手紙に書いて以来、
+            <strong>280年以上だれも証明できていません</strong>。偶数 n をその表し方の個数 g(n) と一緒に打点すると、
+            彗星のような形が現れ、n の小さな素因数ごとにくっきり筋に分かれます。
+          </p>
+
+          <section class="panel" aria-labelledby="gbHeading">
+            <h2 id="gbHeading">ゴールドバッハのコメット</h2>
+
+            <form id="gbForm" class="controls-row">
+              <label class="field">
+                <span>調べる上限</span>
+                <input id="gbLimit" type="number" min="100" max="60000" step="2" value="20000" inputmode="numeric" />
+              </label>
+              <button type="submit" class="btn btn-primary">描画する</button>
+            </form>
+
+            <div class="chart-wrap tall">
+              <canvas id="gbCanvas" aria-label="偶数nとその素数和の表現数の散布図" role="img"></canvas>
+              <div id="gbTooltip" class="chart-tooltip" style="display: none"></div>
+            </div>
+            <div id="gbLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">最小の表現数</span>
+                <span id="gbMin" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大の表現数</span>
+                <span id="gbMax" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">調べた偶数の個数</span>
+                <span id="gbCount" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">反例（g(n) = 0）</span>
+                <span id="gbViolations" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="gbLookupHeading">
+            <h2 id="gbLookupHeading">素数の組を見る</h2>
+            <p class="panel-desc">偶数を入力すると、その数を2つの素数の和で表す方法をすべて列挙します。</p>
+            <form id="gbLookupForm" class="controls-row">
+              <label class="field">
+                <span>偶数</span>
+                <input id="gbLookupInput" type="number" min="4" max="60000" step="2" value="100" inputmode="numeric" />
+              </label>
+              <button type="submit" class="btn btn-primary">分解する</button>
+            </form>
+            <div id="gbLookupOut"></div>
+          </section>
+        </section>
+
+        <!-- ============================ 連分数と向日葵 ============================ -->
+        <section class="view" data-view="continued" hidden>
+          <p class="subtitle">
+            種を1粒ごとに一定の角度だけ回して植えていくと、その角度が<strong>有理数で近似しにくい数</strong>のときだけ
+            隙間なく詰まります。どれだけ近似しにくいかを表すのが連分数で、黄金比の連分数は
+            <code>[0; 1, 1, 1, 1, …]</code> — 全部1、つまり最も近似しにくい数です。だから向日葵はその角度を使います。
+          </p>
+
+          <section class="panel" aria-labelledby="cfHeading">
+            <h2 id="cfHeading">回転角と種の詰まり方</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>1粒あたりの回転 α = <output id="cfAlphaOut" class="mono">0.618034</output> 回転（<output id="cfAngleOut" class="mono">222.49°</output>）</span>
+                <input id="cfAlpha" type="range" min="0.001" max="0.999" step="0.000001" value="0.6180339887" />
+              </label>
+              <label class="field field-grow">
+                <span>種の数 = <output id="cfSeedsOut" class="mono">700</output></span>
+                <input id="cfSeeds" type="range" min="100" max="1200" step="10" value="700" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="回転角のプリセット">
+              <span class="preset-label">試してみる:</span>
+              <span id="cfPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="cfCanvas" aria-label="回転角に応じた種の配置" role="img"></canvas>
+            </div>
+
+            <p id="cfNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">連分数展開</span>
+                <span id="cfExpansion" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最小種間距離（大きいほど密）</span>
+                <span id="cfSpacing" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最良の有理数近似</span>
+                <span id="cfBest" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">収束分数</h3>
+            <p class="panel-desc">
+              連分数を途中で打ち切ると、その段階での最良の有理数近似が得られます。項が大きいほど、次の近似が急に良くなります。
+            </p>
+            <div class="table-wrap">
+              <table class="data-table" id="cfTable">
+                <thead>
+                  <tr>
+                    <th>項</th>
+                    <th>p / q</th>
+                    <th>値</th>
+                    <th>誤差</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- ============================ ゼータ零点と素数 ============================ -->
+        <section class="view" data-view="zeta" hidden>
+          <p class="subtitle">
+            素数の分布は、ゼータ関数の零点に完全に書き込まれています。素数べきのところで跳ぶ階段関数 ψ(x) は、
+            なめらかな直線に<strong>零点ひとつにつき波をひとつ</strong>足していくと再現できる —
+            リーマンの明示公式です。零点を足すたびに直線が階段に変わっていく様子を見てください。
+            零点がすべて臨界線上にあるか（リーマン予想）は、いまも未解決です。
+          </p>
+
+          <section class="panel" aria-labelledby="ztHeading">
+            <h2 id="ztHeading">零点を足して素数を作る</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>x の範囲 = 2 〜 <output id="ztRangeOut" class="mono">60</output></span>
+                <input id="ztRange" type="range" min="20" max="150" step="1" value="60" />
+              </label>
+              <label class="field field-grow">
+                <span>使う零点の数 = <output id="ztZerosOut" class="mono">0</output></span>
+                <input id="ztZeros" type="range" min="0" max="50" step="1" value="0" />
+              </label>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <button type="button" id="ztPlay" class="btn btn-primary">零点を1つずつ足す</button>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="ztCanvas" aria-label="チェビシェフ関数と明示公式の比較" role="img"></canvas>
+            </div>
+            <div id="ztLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">使用した零点</span>
+                <span id="ztStatZeros" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">RMS 誤差</span>
+                <span id="ztStatRms" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大誤差</span>
+                <span id="ztStatMax" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <p class="note">
+              最大誤差はジャンプの真上での行き過ぎ（ギブス現象）に張り付くためあまり下がりませんが、
+              RMS 誤差は零点を足すごとに着実に減っていきます。使用している零点の虚部:
+              <span id="ztZeroList" class="mono"></span>
+            </p>
           </section>
         </section>
       </main>

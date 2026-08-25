@@ -3,8 +3,12 @@ import { initCollatzView } from "./views/collatz.js";
 import { initAliquotView } from "./views/aliquot.js";
 import { initLogisticView } from "./views/logistic.js";
 import { initModmulView } from "./views/modmul.js";
+import { initLangtonView } from "./views/langton.js";
+import { initGoldbachView } from "./views/goldbach.js";
+import { initContinuedView } from "./views/continued.js";
+import { initZetaView } from "./views/zeta.js";
 
-const VIEWS = ["collatz", "aliquot", "logistic", "modmul"];
+const VIEWS = ["collatz", "aliquot", "logistic", "modmul", "langton", "goldbach", "continued", "zeta"];
 const DEFAULT_VIEW = "collatz";
 
 const registry = {
@@ -12,6 +16,10 @@ const registry = {
   aliquot: initAliquotView(),
   logistic: initLogisticView(),
   modmul: initModmulView(),
+  langton: initLangtonView(),
+  goldbach: initGoldbachView(),
+  continued: initContinuedView(),
+  zeta: initZetaView(),
 };
 
 const sections = new Map();

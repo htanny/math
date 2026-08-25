@@ -505,6 +505,38 @@ input[type="range"] {
   border-color: var(--series-2);
 }
 
+.preset-chips {
+  display: contents;
+}
+
+.field input[type="text"] {
+  font-size: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+  min-width: 180px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.05em;
+}
+
+.pair-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pair {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--page);
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+
 .table-wrap {
   overflow-x: auto;
   margin-top: 10px;
