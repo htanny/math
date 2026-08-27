@@ -7,11 +7,29 @@ import { initLangtonView } from "./views/langton.js";
 import { initGoldbachView } from "./views/goldbach.js";
 import { initContinuedView } from "./views/continued.js";
 import { initZetaView } from "./views/zeta.js";
+import { initInscribedView } from "./views/inscribed.js";
+import { initUnitCircleView } from "./views/unitcircle.js";
+import { initCalculusView } from "./views/calculus.js";
 
-const VIEWS = ["collatz", "aliquot", "logistic", "modmul", "langton", "goldbach", "continued", "zeta"];
-const DEFAULT_VIEW = "collatz";
+const VIEWS = [
+  "inscribed",
+  "unitcircle",
+  "calculus",
+  "collatz",
+  "aliquot",
+  "logistic",
+  "modmul",
+  "langton",
+  "goldbach",
+  "continued",
+  "zeta",
+];
+const DEFAULT_VIEW = "inscribed";
 
 const registry = {
+  inscribed: initInscribedView(),
+  unitcircle: initUnitCircleView(),
+  calculus: initCalculusView(),
   collatz: initCollatzView(),
   aliquot: initAliquotView(),
   logistic: initLogisticView(),

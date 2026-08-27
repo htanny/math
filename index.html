@@ -7,7 +7,7 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta
       name="description"
-      content="コラッツ予想・アリコット数列・ロジスティック写像・円の掛け算表を、アニメーションとグラフで探索するインタラクティブツール"
+      content="円周角の定理・単位円と三角関数・微分と積分といった学校数学から、コラッツ予想・ゴールドバッハ・ゼータ零点などの未解決問題まで、動かして確かめるインタラクティブな数学ツール"
     />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -21,18 +21,286 @@
           </button>
         </div>
         <nav class="tabs" aria-label="テーマ切替">
-          <button type="button" class="tab" data-view="collatz">コラッツ予想</button>
-          <button type="button" class="tab" data-view="aliquot">アリコット数列</button>
-          <button type="button" class="tab" data-view="logistic">ロジスティック写像</button>
-          <button type="button" class="tab" data-view="modmul">円の掛け算表</button>
-          <button type="button" class="tab" data-view="langton">ラングトンのアリ</button>
-          <button type="button" class="tab" data-view="goldbach">ゴールドバッハ</button>
-          <button type="button" class="tab" data-view="continued">連分数と向日葵</button>
-          <button type="button" class="tab" data-view="zeta">ゼータ零点と素数</button>
+          <div class="tab-group">
+            <span class="tab-group-label">学校数学</span>
+            <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
+            <button type="button" class="tab" data-view="unitcircle">単位円と三角関数</button>
+            <button type="button" class="tab" data-view="calculus">微分と積分</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">数の探検</span>
+            <button type="button" class="tab" data-view="collatz">コラッツ予想</button>
+            <button type="button" class="tab" data-view="aliquot">アリコット数列</button>
+            <button type="button" class="tab" data-view="logistic">ロジスティック写像</button>
+            <button type="button" class="tab" data-view="modmul">円の掛け算表</button>
+            <button type="button" class="tab" data-view="langton">ラングトンのアリ</button>
+            <button type="button" class="tab" data-view="goldbach">ゴールドバッハ</button>
+            <button type="button" class="tab" data-view="continued">連分数と向日葵</button>
+            <button type="button" class="tab" data-view="zeta">ゼータ零点と素数</button>
+          </div>
         </nav>
       </header>
 
       <main>
+        <!-- ============================ 円周角の定理 ============================ -->
+        <section class="view" data-view="inscribed" hidden>
+          <p class="subtitle">
+            円周上の点 P をどこに動かしても、弦 AB を見込む角 ∠APB は<strong>変わりません</strong>。
+            そして中心角 ∠AOB はつねにその 2 倍。静止した図では伝わらないこの事実は、
+            <strong>動かすこと自体が証明の実感</strong>になります。（中3）
+          </p>
+
+          <section class="panel" aria-labelledby="icHeading">
+            <h2 id="icHeading">点をドラッグしてみる</h2>
+            <p class="panel-desc">
+              A・B・P はすべて円周上をドラッグできます。P を大きく動かしても円周角が動かないことを確かめてください。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="icTrace" type="checkbox" checked />
+                <span>P の軌跡を残す</span>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="icQuad" type="checkbox" />
+                <span>反対側の弧に点 Q を置く</span>
+              </label>
+              <button type="button" id="icDiameter" class="btn">AB を直径にする</button>
+              <button type="button" id="icReset" class="btn btn-ghost">最初の配置に戻す</button>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="icCanvas" aria-label="円周角と中心角の作図" role="img"></canvas>
+            </div>
+
+            <p id="icNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">円周角 ∠APB</span>
+                <span id="icInscribed" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">中心角 ∠AOB</span>
+                <span id="icCentral" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">中心角 ÷ 円周角</span>
+                <span id="icRatio" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ======================== 単位円と三角関数 ======================== -->
+        <section class="view" data-view="unitcircle" hidden>
+          <p class="subtitle">
+            単位円の上を点が回ると、その<strong>高さがそのまま sin のグラフ</strong>になり、
+            <strong>横の位置が cos のグラフ</strong>になります。三角比が「直角三角形の辺の比」から
+            「円の上の運動」へ広がる瞬間を、点線でつないで見えるようにしました。（数学I・II）
+          </p>
+
+          <section class="panel" aria-labelledby="ucHeading">
+            <h2 id="ucHeading">円とグラフをつなぐ</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>θ = <output id="ucAngleOut" class="mono">45°</output>（<output id="ucRadOut" class="mono">0.250π</output>）</span>
+                <input id="ucAngle" type="range" min="0" max="360" step="1" value="45" />
+              </label>
+              <button type="button" id="ucPlay" class="btn btn-primary">1周まわす</button>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="角度のプリセット">
+              <span class="preset-label">よく使う角:</span>
+              <span id="ucPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="ucShowSin" type="checkbox" checked />
+                <span>sin</span>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="ucShowCos" type="checkbox" checked />
+                <span>cos</span>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="ucShowTan" type="checkbox" />
+                <span>tan</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap wide">
+              <canvas id="ucCanvas" aria-label="単位円と三角関数のグラフ" role="img"></canvas>
+            </div>
+            <div id="ucLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">sin θ</span>
+                <span id="ucStatSin" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">cos θ</span>
+                <span id="ucStatCos" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">tan θ</span>
+                <span id="ucStatTan" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+
+            <p id="ucExact" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="ucWaveHeading">
+            <h2 id="ucWaveHeading">y = A sin( B(x − C) ) + D を動かす</h2>
+            <p class="panel-desc">
+              振幅・周期・平行移動が、どの文字に対応しているかをスライダーで確かめられます。細い線が基準の y = sin x です。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>A（振幅）= <output id="ucAOut" class="mono">1.0</output></span>
+                <input id="ucA" type="range" min="-3" max="3" step="0.1" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>B（周期）= <output id="ucBOut" class="mono">1.0</output></span>
+                <input id="ucB" type="range" min="0.5" max="4" step="0.1" value="1" />
+              </label>
+            </div>
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>C（横の平行移動）= <output id="ucCOut" class="mono">0°</output></span>
+                <input id="ucC" type="range" min="-180" max="180" step="5" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>D（縦の平行移動）= <output id="ucDOut" class="mono">0.0</output></span>
+                <input id="ucD" type="range" min="-2" max="2" step="0.1" value="0" />
+              </label>
+            </div>
+            <div class="controls-row secondary-row">
+              <button type="button" id="ucWaveReset" class="btn">y = sin x に戻す</button>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="ucWave" aria-label="三角関数のグラフの変形" role="img"></canvas>
+            </div>
+            <p id="ucWaveInfo" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ============================ 微分と積分 ============================ -->
+        <section class="view" data-view="calculus" hidden>
+          <p class="subtitle">
+            微分は<strong>接線の傾き</strong>、積分は<strong>面積</strong>。そして面積を微分すると元の関数に戻る
+            （微積分学の基本定理）。この3つを、同じ関数の上で連動させて見られるようにしました。（数学II・III）
+          </p>
+
+          <div class="controls-row">
+            <label class="field field-inline">
+              <span>関数を選ぶ</span>
+              <select id="caFunc"></select>
+            </label>
+          </div>
+
+          <section class="panel" aria-labelledby="caDiffHeading">
+            <h2 id="caDiffHeading">微分 ＝ 接線の傾き</h2>
+            <p class="panel-desc">
+              2点を結ぶ<strong>割線</strong>の傾きは、2点を近づける（h を 0 に近づける）と<strong>接線</strong>の傾きに近づきます。
+              その極限が微分係数で、下のグラフがそれを x ごとに並べた導関数です。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>基準の点 x₀ = <output id="caX0Out" class="mono">1.00</output></span>
+                <input id="caX0" type="range" min="-3" max="3" step="0.01" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>2点の間隔 h = <output id="caHOut" class="mono">1.000</output></span>
+                <input id="caH" type="range" min="0.01" max="1.5" step="0.005" value="1" />
+              </label>
+              <button type="button" id="caShrink" class="btn btn-primary">h → 0 にする</button>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="caDiffCanvas" aria-label="割線と接線、および導関数のグラフ" role="img"></canvas>
+            </div>
+            <div id="caDiffLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">割線の傾き</span>
+                <span id="caSecant" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">接線の傾き（微分係数）</span>
+                <span id="caTangent" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">ずれ</span>
+                <span id="caGap" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="caIntHeading">
+            <h2 id="caIntHeading">積分 ＝ 面積、そして基本定理</h2>
+            <p class="panel-desc">
+              短冊の数を増やすと、その合計は本当の面積に近づきます（区分求積法）。
+              下のグラフは「a から x までの面積」を x の関数として描いたもの。<strong>その接線の傾きが、上の関数の高さと一致します。</strong>
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>左端 a = <output id="caAOut" class="mono">0.00</output></span>
+                <input id="caA" type="range" min="-3" max="3" step="0.01" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>右端 b = <output id="caBOut" class="mono">2.00</output></span>
+                <input id="caB" type="range" min="-3" max="3" step="0.01" value="2" />
+              </label>
+            </div>
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>短冊の数 n = <output id="caNOut" class="mono">8</output></span>
+                <input id="caN" type="range" min="1" max="200" step="1" value="8" />
+              </label>
+              <label class="field field-inline">
+                <span>高さの取り方</span>
+                <select id="caRule">
+                  <option value="left">左端</option>
+                  <option value="mid" selected>中点</option>
+                  <option value="right">右端</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="caIntCanvas" aria-label="リーマン和と面積関数のグラフ" role="img"></canvas>
+            </div>
+            <div id="caIntLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">短冊の合計</span>
+                <span id="caSum" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">本当の面積</span>
+                <span id="caExact" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">ずれ</span>
+                <span id="caErr" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <p id="caFtcNote" class="note"></p>
+          </section>
+        </section>
+
         <!-- ============================ コラッツ予想 ============================ -->
         <section class="view" data-view="collatz" hidden>
           <p class="subtitle">
@@ -680,9 +948,10 @@
 
       <footer class="app-footer">
         <p>
-          コラッツ予想・アリコット数列（カタラン・ディクソン予想）はいずれも未解決問題です。
-          ロジスティック写像と円の掛け算表は、単純な規則から複雑な構造が現れる例として並べています。
-          このツールは学習・鑑賞用の可視化です。
+          「学校数学」は中学・高校で習う定理を、動かして確かめられる形にしたものです。
+          「数の探検」に並ぶコラッツ予想・アリコット数列（カタラン・ディクソン予想）・ゴールドバッハ予想・
+          リーマン予想はいずれも未解決問題で、ロジスティック写像・円の掛け算表・ラングトンのアリ・連分数は、
+          単純な規則から複雑な構造が現れる例です。このツールは学習・鑑賞用の可視化です。
         </p>
       </footer>
     </div>

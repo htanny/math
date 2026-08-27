@@ -112,11 +112,34 @@ h1 {
 
 .tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   margin-top: 16px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 0;
+}
+
+/* Eleven tabs in one row is unreadable, so they sit in labelled groups.
+   The label is taken out of the flow so a group that wraps keeps its
+   continuation lines aligned under the first tab rather than under the label. */
+.tab-group {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-left: 5.2em;
+}
+
+.tab-group + .tab-group {
+  margin-top: 2px;
+}
+
+.tab-group-label {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  font-size: 11px;
+  color: var(--muted);
 }
 
 .tab {
@@ -321,6 +344,19 @@ h1 {
 .chart-wrap.square-ish {
   height: 260px;
   margin-top: 0;
+}
+
+.chart-wrap.wide {
+  height: 320px;
+}
+
+#icCanvas {
+  touch-action: none;
+  cursor: grab;
+}
+
+#icCanvas:active {
+  cursor: grabbing;
 }
 
 .chart-grid {
