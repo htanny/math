@@ -338,6 +338,12 @@ h1 {
   height: 460px;
 }
 
+/* a construction that is taller than it is wide, and would otherwise be
+   squeezed into a narrow column in the middle of a wide canvas */
+.chart-wrap.upright {
+  height: min(620px, 80vh);
+}
+
 /* worked algebra, one line per step */
 .step-list {
   margin: 14px 0 0;
@@ -653,6 +659,47 @@ input[type="range"] {
 .data-table .row-accent td {
   color: var(--text-secondary);
   border-bottom: none;
+}
+
+/* short strips: number lines, fraction bars — the drawing is wide, not tall */
+.chart-wrap.short {
+  height: 170px;
+}
+
+/* inline equation scaffolding, so the number inputs read as one formula */
+.frac-slash,
+.frac-div,
+.eq-op,
+.eq-tag {
+  font-size: 15px;
+  color: var(--text-secondary);
+  align-self: center;
+}
+
+.frac-div {
+  margin: 0 4px;
+}
+
+.eq-tag {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 1.4em;
+}
+
+/* inline formula inputs stay narrow so the equation reads as one line */
+#frA, #frB, #frC, #frD,
+#lnEa1, #lnEb1, #lnEc1,
+#lnEa2, #lnEb2, #lnEc2 {
+  min-width: 76px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .app-footer {
