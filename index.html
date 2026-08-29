@@ -27,6 +27,7 @@
             <button type="button" class="tab" data-view="rate">割合と速さ</button>
             <button type="button" class="tab" data-view="circlearea">円の面積</button>
             <button type="button" class="tab" data-view="net">展開図と立体</button>
+            <button type="button" class="tab" data-view="section">立体切断</button>
           </div>
           <div class="tab-group">
             <span class="tab-group-label">中学校</span>
@@ -370,6 +371,138 @@
               <div class="stat-tile">
                 <span class="stat-label">V − E + F</span>
                 <span id="ntEuler" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ============================ 立体切断 ============================ -->
+        <section class="view" data-view="section" hidden>
+          <p class="subtitle">
+            中学受験の最難関、立体の切断。むずかしいのは切り口の形そのものより、
+            <strong>作図の3原則の3つめ「面を延長して、立方体の外に交点をつくる」</strong>です。
+            紙の上では何が起きているのか分からないこの操作を、回して確かめられるようにしました。（中学受験）
+          </p>
+
+          <section class="panel" aria-labelledby="scHeading">
+            <h2 id="scHeading">3点を決めて切る</h2>
+            <p class="panel-desc">
+              立方体 ABCD-EFGH の辺の上に点を3つ置くと、その3点を通る平面で切った切り口が出ます。
+              図はドラッグで回せます。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="切り方のプリセット">
+              <span class="preset-label">例:</span>
+              <span id="scPresets" class="preset-chips"></span>
+            </div>
+
+            <div id="scPointRows"></div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>作図の手順 = <output id="scStepOut" class="mono">完成</output></span>
+                <input id="scStep" type="range" min="0" max="6" step="1" value="6" />
+              </label>
+              <button type="button" id="scPlay" class="btn btn-primary">1本ずつ引く</button>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>2つに分ける = <output id="scSplitOut" class="mono">0%</output></span>
+                <input id="scSplit" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>向き = <output id="scSpinOut" class="mono">35°</output></span>
+                <input id="scSpin" type="range" min="0" max="360" step="1" value="35" />
+              </label>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="scExt" type="checkbox" checked />
+                <span>延長線と立方体の外の交点を出す</span>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="scHidden" type="checkbox" checked />
+                <span>かくれた辺を点線で描く</span>
+              </label>
+              <button type="button" id="scTop" class="btn">真上から</button>
+              <button type="button" id="scFront" class="btn">真正面から</button>
+              <button type="button" id="scReset" class="btn btn-ghost">向きを戻す</button>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="scCanvas" aria-label="立方体の切断" role="img"></canvas>
+            </div>
+
+            <p id="scNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">切り口の形</span>
+                <span id="scShape" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">切り口の面積</span>
+                <span id="scArea" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">体積比</span>
+                <span id="scRatio" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="scStepsHeading">
+            <h2 id="scStepsHeading">作図の3原則で、1本ずつ</h2>
+            <p class="panel-desc">
+              上の図の切り口を、どの原則で引いたのかを順に並べたものです。
+              <strong>原則3が出てきたら、そこが延長法</strong> — 立方体の外に交点を作らないと引けない線です。
+            </p>
+            <ol id="scSteps" class="step-list"></ol>
+            <p id="scRules" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="scPrismHeading">
+            <h2 id="scPrismHeading">角柱の斜め切り —— 「平均の高さ」はなぜ使えるのか</h2>
+            <p class="panel-desc">
+              角柱を、側面の辺をすべて通るように斜めに切ったとき、
+              <code>体積 = 底面積 × 側面の辺の平均</code>。公式として暗記されがちですが、
+              実際に切って体積を出すと、本当に一致することが確かめられます。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="角柱の種類">
+              <span class="preset-label">立体:</span>
+              <span id="scPrismKind" class="preset-chips"></span>
+            </div>
+
+            <div id="scPrismRows"></div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>向き = <output id="scPrismSpinOut" class="mono">35°</output></span>
+                <input id="scPrismSpin" type="range" min="0" max="360" step="1" value="35" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="scPrism" aria-label="角柱の斜め切り" role="img"></canvas>
+            </div>
+
+            <p id="scPrismNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">辺の平均</span>
+                <span id="scPrismMean" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">底面積 × 平均</span>
+                <span id="scPrismFormula" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">実際に切った体積</span>
+                <span id="scPrismActual" class="stat-value stat-value-sm">—</span>
               </div>
             </div>
           </section>
