@@ -10,11 +10,15 @@ import { initZetaView } from "./views/zeta.js";
 import { initInscribedView } from "./views/inscribed.js";
 import { initUnitCircleView } from "./views/unitcircle.js";
 import { initCalculusView } from "./views/calculus.js";
+import { initCalculusDeepView } from "./views/calculusDeep.js";
+import { initCalculusAdvView } from "./views/calculusAdv.js";
 
 const VIEWS = [
   "inscribed",
   "unitcircle",
   "calculus",
+  "calculusDeep",
+  "calculusAdv",
   "collatz",
   "aliquot",
   "logistic",
@@ -30,6 +34,8 @@ const registry = {
   inscribed: initInscribedView(),
   unitcircle: initUnitCircleView(),
   calculus: initCalculusView(),
+  calculusDeep: initCalculusDeepView(),
+  calculusAdv: initCalculusAdvView(),
   collatz: initCollatzView(),
   aliquot: initAliquotView(),
   logistic: initLogisticView(),

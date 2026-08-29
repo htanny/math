@@ -6,118 +6,49 @@ import {
   exactArea,
   areaFunction,
   areaAt,
+  shapeOf,
+  monotonicityTable,
+  meanValuePoints,
+  SHAPE_LABEL,
   RULES,
 } from "../calculus.js";
 import { readVars, setupCanvasDPR } from "../chart.js";
+import {
+  PLOT_CHROME,
+  makeRegion,
+  plotCurve,
+  labelRegion,
+  xTickLabels,
+  niceRange,
+  markPoint,
+  vLine,
+  slopeLine,
+  legendHTML,
+} from "../plot.js";
 
 const $ = (id) => document.getElementById(id);
-const TAU = Math.PI * 2;
-const TICK_FONT = "11px system-ui, -apple-system, 'Segoe UI', sans-serif";
+const fmt = (v, d = 3) => (Number.isFinite(v) ? v.toFixed(d) : "—");
 
-/** A plot region with its own scales; x is shared between stacked regions. */
-function makeRegion(ctx, box, xRange, yRange, vars) {
-  const [x0, x1] = xRange;
-  const [y0, y1] = yRange;
-  const sx = (x) => box.x + ((x - x0) / (x1 - x0)) * box.w;
-  const sy = (y) => box.y + box.h - ((y - y0) / (y1 - y0 || 1)) * box.h;
-
-  ctx.strokeStyle = vars["--gridline"];
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.rect(box.x + 0.5, box.y + 0.5, box.w - 1, box.h - 1);
-  ctx.stroke();
-
-  // axes only where zero is actually inside the window
-  ctx.strokeStyle = vars["--baseline"];
-  if (y0 < 0 && y1 > 0) {
-    const y = Math.round(sy(0)) + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(box.x, y);
-    ctx.lineTo(box.x + box.w, y);
-    ctx.stroke();
+/** Stack of plot regions sharing one x-axis. */
+function stack(ctx, pad, width, height, xRange, specs, vars) {
+  const gap = 13;
+  const w = width - pad.left - pad.right;
+  const total = height - pad.top - pad.bottom - gap * (specs.length - 1);
+  if (w <= 0 || total <= 0) return null;
+  const regions = [];
+  let y = pad.top;
+  for (const spec of specs) {
+    const h = total * spec.frac;
+    regions.push(makeRegion(ctx, { x: pad.left, y, w, h }, xRange, spec.yRange, vars));
+    y += h + gap;
   }
-  if (x0 < 0 && x1 > 0) {
-    const x = Math.round(sx(0)) + 0.5;
-    ctx.beginPath();
-    ctx.moveTo(x, box.y);
-    ctx.lineTo(x, box.y + box.h);
-    ctx.stroke();
-  }
-  return { sx, sy, box, xRange, yRange };
+  return regions;
 }
-
-function plotCurve(ctx, reg, fn, color, width = 2) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  const [x0, x1] = reg.xRange;
-  const [y0, y1] = reg.yRange;
-  const steps = Math.max(200, Math.round(reg.box.w * 2));
-  let started = false;
-  for (let i = 0; i <= steps; i++) {
-    const x = x0 + ((x1 - x0) * i) / steps;
-    const y = fn(x);
-    if (!Number.isFinite(y) || y < y0 - (y1 - y0) || y > y1 + (y1 - y0)) {
-      started = false;
-      continue;
-    }
-    const px = reg.sx(x);
-    const py = reg.sy(Math.max(y0 - 1, Math.min(y1 + 1, y)));
-    if (!started) {
-      ctx.moveTo(px, py);
-      started = true;
-    } else ctx.lineTo(px, py);
-  }
-  ctx.stroke();
-}
-
-function labelRegion(ctx, reg, vars, title, yTicks) {
-  ctx.fillStyle = vars["--muted"];
-  ctx.font = TICK_FONT;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  for (const t of yTicks) {
-    if (t < reg.yRange[0] || t > reg.yRange[1]) continue;
-    ctx.fillText(String(t), reg.box.x - 6, reg.sy(t));
-  }
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = vars["--text-secondary"];
-  ctx.fillText(title, reg.box.x + 8, reg.box.y + 6);
-}
-
-function niceRange(f, x0, x1) {
-  let lo = Infinity;
-  let hi = -Infinity;
-  for (let i = 0; i <= 400; i++) {
-    const v = f(x0 + ((x1 - x0) * i) / 400);
-    if (!Number.isFinite(v)) continue;
-    if (v < lo) lo = v;
-    if (v > hi) hi = v;
-  }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return [-1, 1];
-  const padding = (hi - lo) * 0.15 || 1;
-  return [lo - padding, hi + padding];
-}
-
-const CHROME = [
-  "--surface-1",
-  "--muted",
-  "--gridline",
-  "--baseline",
-  "--text-primary",
-  "--text-secondary",
-  "--series-1",
-  "--series-2",
-  "--series-3",
-  "--series-4",
-];
 
 export function initCalculusView() {
   const funcSelect = $("caFunc");
 
-  // derivative panel
+  // panel 1: secant -> tangent
   const x0Slider = $("caX0");
   const x0Out = $("caX0Out");
   const hSlider = $("caH");
@@ -129,7 +60,24 @@ export function initCalculusView() {
   const statTangent = $("caTangent");
   const statGap = $("caGap");
 
-  // integral panel
+  // panel 2: shape of the graph
+  const shapeCanvas = $("caShapeCanvas");
+  const shapeLegend = $("caShapeLegend");
+  const shapeTableBody = document.querySelector("#caShapeTable tbody");
+  const shapeSummary = $("caShapeSummary");
+
+  // panel 3: mean value theorem
+  const mvtA = $("caMvtA");
+  const mvtAOut = $("caMvtAOut");
+  const mvtB = $("caMvtB");
+  const mvtBOut = $("caMvtBOut");
+  const mvtCanvas = $("caMvtCanvas");
+  const mvtLegend = $("caMvtLegend");
+  const mvtSlope = $("caMvtSlope");
+  const mvtC = $("caMvtC");
+  const mvtNote = $("caMvtNote");
+
+  // panel 4: integral
   const aSlider = $("caA");
   const aOut = $("caAOut");
   const bSlider = $("caB");
@@ -142,159 +90,269 @@ export function initCalculusView() {
   const statSum = $("caSum");
   const statExact = $("caExact");
   const statErr = $("caErr");
+  const statSigned = $("caSigned");
+  const riemannFormula = $("caRiemann");
   const ftcNote = $("caFtcNote");
 
-  let fn = functionByKey(funcSelect.value);
+  let fn = functionByKey("sq");
   let shrinking = false;
   let animHandle = null;
   let visible = false;
 
   function clampToDomain() {
     const [lo, hi] = fn.domain;
-    x0Slider.min = String(lo);
-    x0Slider.max = String(hi);
-    aSlider.min = String(lo);
-    aSlider.max = String(hi);
-    bSlider.min = String(lo);
-    bSlider.max = String(hi);
-    // A round step, not one derived from the domain: 0.0260 would stop the
-    // sliders ever landing exactly on 1.5.
-    const step = "0.01";
-    x0Slider.step = step;
-    aSlider.step = step;
-    bSlider.step = step;
-    x0Slider.value = String(Math.min(hi, Math.max(lo, Number(x0Slider.value))));
-    aSlider.value = String(Math.min(hi, Math.max(lo, Number(aSlider.value))));
-    bSlider.value = String(Math.min(hi, Math.max(lo, Number(bSlider.value))));
+    for (const el of [x0Slider, aSlider, bSlider, mvtA, mvtB]) {
+      el.min = String(lo);
+      el.max = String(hi);
+      el.step = "0.01";
+      el.value = String(Math.min(hi, Math.max(lo, Number(el.value))));
+    }
+    // keep the two intervals sensible for the new domain
+    if (Number(bSlider.value) <= Number(aSlider.value)) {
+      aSlider.value = String(lo + (hi - lo) * 0.25);
+      bSlider.value = String(lo + (hi - lo) * 0.75);
+    }
+    if (Number(mvtB.value) <= Number(mvtA.value)) {
+      mvtA.value = String(lo + (hi - lo) * 0.15);
+      mvtB.value = String(lo + (hi - lo) * 0.85);
+    }
   }
 
-  /* ------------------------------------------------------- derivative -- */
+  /* ------------------------------------------ panel 1: secant -> tangent -- */
 
   function drawDerivative() {
     const { ctx, width, height } = setupCanvasDPR(diffCanvas);
     ctx.clearRect(0, 0, width, height);
-    const vars = readVars(diffCanvas.parentElement, CHROME);
-
-    const pad = { top: 10, right: 14, bottom: 26, left: 40 };
-    const gap = 14;
-    const w = width - pad.left - pad.right;
-    const totalH = height - pad.top - pad.bottom - gap;
-    if (w <= 0 || totalH <= 0) return;
-    const hTop = totalH * 0.58;
-    const hBot = totalH - hTop;
-
+    const vars = readVars(diffCanvas.parentElement, PLOT_CHROME);
     const [xLo, xHi] = fn.domain;
+
+    const regs = stack(
+      ctx,
+      { top: 10, right: 14, bottom: 26, left: 42 },
+      width,
+      height,
+      [xLo, xHi],
+      [
+        { frac: 0.58, yRange: niceRange(fn.f, xLo, xHi) },
+        { frac: 0.42, yRange: niceRange(fn.df, xLo, xHi) },
+      ],
+      vars
+    );
+    if (!regs) return;
+    const [top, bot] = regs;
+
+    plotCurve(ctx, top, fn.f, vars["--series-1"]);
+    plotCurve(ctx, bot, fn.df, vars["--series-3"]);
+
     const x0 = Number(x0Slider.value);
     const h = Number(hSlider.value);
-
-    const topReg = makeRegion(
-      ctx,
-      { x: pad.left, y: pad.top, w, h: hTop },
-      [xLo, xHi],
-      niceRange(fn.f, xLo, xHi),
-      vars
-    );
-    const botReg = makeRegion(
-      ctx,
-      { x: pad.left, y: pad.top + hTop + gap, w, h: hBot },
-      [xLo, xHi],
-      niceRange(fn.df, xLo, xHi),
-      vars
-    );
-
-    plotCurve(ctx, topReg, fn.f, vars["--series-1"]);
-    plotCurve(ctx, botReg, fn.df, vars["--series-3"]);
-
     const y0 = fn.f(x0);
-    const slopeExact = fn.df(x0);
+    const exact = fn.df(x0);
     const x1 = Math.min(xHi, Math.max(xLo, x0 + h));
     const y1 = fn.f(x1);
-    const slopeSecant = secantSlope(fn.f, x0, x1 - x0);
+    const sec = secantSlope(fn.f, x0, x1 - x0);
 
-    // tangent (the limit) drawn first, so the secant reads on top of it
-    ctx.strokeStyle = vars["--series-4"];
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    ctx.moveTo(topReg.sx(xLo), topReg.sy(y0 + slopeExact * (xLo - x0)));
-    ctx.lineTo(topReg.sx(xHi), topReg.sy(y0 + slopeExact * (xHi - x0)));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    if (Number.isFinite(slopeSecant)) {
-      ctx.strokeStyle = vars["--series-2"];
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(topReg.sx(xLo), topReg.sy(y0 + slopeSecant * (xLo - x0)));
-      ctx.lineTo(topReg.sx(xHi), topReg.sy(y0 + slopeSecant * (xHi - x0)));
-      ctx.stroke();
-
-      // the rise-over-run triangle that defines the slope
+    slopeLine(ctx, top, x0, y0, exact, vars["--series-4"], 2, [5, 4]);
+    if (Number.isFinite(sec)) {
+      slopeLine(ctx, top, x0, y0, sec, vars["--series-2"], 2);
       ctx.strokeStyle = vars["--muted"];
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
-      ctx.moveTo(topReg.sx(x0), topReg.sy(y0));
-      ctx.lineTo(topReg.sx(x1), topReg.sy(y0));
-      ctx.lineTo(topReg.sx(x1), topReg.sy(y1));
+      ctx.moveTo(top.sx(x0), top.sy(y0));
+      ctx.lineTo(top.sx(x1), top.sy(y0));
+      ctx.lineTo(top.sx(x1), top.sy(y1));
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    const mark = (reg, x, y, color) => {
-      ctx.fillStyle = vars["--surface-1"];
-      ctx.beginPath();
-      ctx.arc(reg.sx(x), reg.sy(y), 7, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(reg.sx(x), reg.sy(y), 4.5, 0, TAU);
-      ctx.fill();
-    };
-    mark(topReg, x0, y0, vars["--series-1"]);
-    if (Number.isFinite(y1)) mark(topReg, x1, y1, vars["--series-2"]);
-    mark(botReg, x0, slopeExact, vars["--series-3"]);
+    markPoint(ctx, top, x0, y0, vars["--series-1"], vars);
+    if (Number.isFinite(y1)) markPoint(ctx, top, x1, y1, vars["--series-2"], vars);
+    markPoint(ctx, bot, x0, exact, vars["--series-3"], vars);
 
-    labelRegion(ctx, topReg, vars, `y = ${fn.label}`, [-4, -2, 0, 2, 4, 6, 8]);
-    labelRegion(ctx, botReg, vars, `y′ = ${fn.dfLabel}`, [-6, -3, 0, 3, 6, 9]);
+    labelRegion(ctx, top, vars, `y = ${fn.label}`, [-8, -4, -2, 0, 2, 4, 8]);
+    labelRegion(ctx, bot, vars, `y′ = ${fn.dfLabel}`, [-9, -6, -3, 0, 3, 6, 9]);
+    xTickLabels(ctx, bot, vars);
 
-    ctx.fillStyle = vars["--muted"];
-    ctx.font = TICK_FONT;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (let i = 0; i <= 4; i++) {
-      const x = xLo + ((xHi - xLo) * i) / 4;
-      ctx.fillText(x.toFixed(1), botReg.sx(x), botReg.box.y + botReg.box.h + 6);
-    }
+    diffLegend.innerHTML = legendHTML([
+      ["割線（2点を結ぶ直線）", vars["--series-2"]],
+      ["接線（h → 0 の極限）", vars["--series-4"]],
+      ["導関数 y′", vars["--series-3"]],
+    ]);
 
-    diffLegend.innerHTML =
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-2"]}"></span>割線（2点を結ぶ直線）</span>` +
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-4"]}"></span>接線（h → 0 の極限）</span>` +
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-3"]}"></span>導関数 y′</span>`;
-
-    statSecant.textContent = Number.isFinite(slopeSecant) ? slopeSecant.toFixed(5) : "—";
-    statTangent.textContent = slopeExact.toFixed(5);
-    statGap.textContent = Number.isFinite(slopeSecant)
-      ? Math.abs(slopeSecant - slopeExact).toFixed(5)
-      : "—";
+    statSecant.textContent = fmt(sec, 5);
+    statTangent.textContent = fmt(exact, 5);
+    statGap.textContent = Number.isFinite(sec) ? fmt(Math.abs(sec - exact), 5) : "—";
   }
 
-  /* --------------------------------------------------------- integral -- */
+  /* --------------------------------------- panel 2: shape and the table -- */
+
+  function drawShape() {
+    const { ctx, width, height } = setupCanvasDPR(shapeCanvas);
+    ctx.clearRect(0, 0, width, height);
+    const vars = readVars(shapeCanvas.parentElement, PLOT_CHROME);
+    const [xLo, xHi] = fn.domain;
+
+    const regs = stack(
+      ctx,
+      { top: 10, right: 14, bottom: 26, left: 42 },
+      width,
+      height,
+      [xLo, xHi],
+      [
+        { frac: 0.44, yRange: niceRange(fn.f, xLo, xHi) },
+        { frac: 0.28, yRange: niceRange(fn.df, xLo, xHi) },
+        { frac: 0.28, yRange: niceRange(fn.d2f, xLo, xHi) },
+      ],
+      vars
+    );
+    if (!regs) return;
+    const [rf, rd1, rd2] = regs;
+
+    const { stationary, inflections } = shapeOf(fn);
+
+    // guide lines tying the three graphs together at the interesting x values
+    for (const p of stationary) {
+      for (const r of regs) vLine(ctx, r, p.x, vars["--series-2"], [3, 4]);
+    }
+    for (const p of inflections) {
+      for (const r of regs) vLine(ctx, r, p.x, vars["--series-4"], [2, 5]);
+    }
+
+    plotCurve(ctx, rf, fn.f, vars["--series-1"]);
+    plotCurve(ctx, rd1, fn.df, vars["--series-3"]);
+    plotCurve(ctx, rd2, fn.d2f, vars["--series-4"]);
+
+    for (const p of stationary) {
+      markPoint(ctx, rf, p.x, p.y, vars["--series-2"], vars);
+      markPoint(ctx, rd1, p.x, 0, vars["--series-2"], vars, 3.5);
+    }
+    for (const p of inflections) {
+      markPoint(ctx, rf, p.x, p.y, vars["--series-4"], vars, 3.5);
+      markPoint(ctx, rd2, p.x, 0, vars["--series-4"], vars, 3.5);
+    }
+
+    labelRegion(ctx, rf, vars, `y = ${fn.label}`, [-8, -4, 0, 4, 8]);
+    labelRegion(ctx, rd1, vars, `y′ = ${fn.dfLabel}`, [-6, 0, 6]);
+    labelRegion(ctx, rd2, vars, `y″ = ${fn.d2fLabel}`, [-6, 0, 6]);
+    xTickLabels(ctx, rd2, vars);
+
+    shapeLegend.innerHTML = legendHTML([
+      ["極値（y′ = 0 で符号が変わる）", vars["--series-2"]],
+      ["変曲点（y″ = 0 で符号が変わる）", vars["--series-4"]],
+    ]);
+
+    renderShapeTable();
+  }
+
+  function renderShapeTable() {
+    const { rows, stationary, inflections } = monotonicityTable(fn);
+    const cuts = [];
+    for (const p of stationary) cuts.push({ x: p.x, kind: SHAPE_LABEL[p.kind] });
+    for (const p of inflections) cuts.push({ x: p.x, kind: "変曲点" });
+    cuts.sort((a, b) => a.x - b.x);
+
+    const cells = [];
+    rows.forEach((r, i) => {
+      cells.push(`<tr>
+        <td class="mono">${r.lo.toFixed(3)} 〜 ${r.hi.toFixed(3)}</td>
+        <td class="mono">${r.dfSign > 0 ? "＋" : r.dfSign < 0 ? "−" : "0"}</td>
+        <td class="mono">${r.d2fSign > 0 ? "＋" : r.d2fSign < 0 ? "−" : "0"}</td>
+        <td>${r.dfSign > 0 ? "増加" : r.dfSign < 0 ? "減少" : "一定"}・${r.d2fSign > 0 ? "下に凸" : r.d2fSign < 0 ? "上に凸" : "—"}</td>
+      </tr>`);
+      const cut = cuts[i];
+      if (cut) {
+        cells.push(`<tr class="row-accent">
+          <td class="mono">x = ${cut.x.toFixed(4)}</td><td colspan="3">${cut.kind}</td>
+        </tr>`);
+      }
+    });
+    shapeTableBody.innerHTML = cells.join("");
+
+    const st = stationary
+      .map((p) => `x = ${p.x.toFixed(4)}（${SHAPE_LABEL[p.kind]}）`)
+      .join("、");
+    const inf = inflections.map((p) => `x = ${p.x.toFixed(4)}`).join("、");
+    shapeSummary.innerHTML =
+      `<strong>極値</strong>: ${st || "この範囲にはありません"}　／　` +
+      `<strong>変曲点</strong>: ${inf || "この範囲にはありません"}。` +
+      `y′ の符号が変わるところが極値、y″ の符号が変わるところが変曲点です。3つのグラフの縦線が同じ x で揃っているのを確かめてください。`;
+  }
+
+  /* ------------------------------------------ panel 3: mean value theorem -- */
+
+  function drawMvt() {
+    const { ctx, width, height } = setupCanvasDPR(mvtCanvas);
+    ctx.clearRect(0, 0, width, height);
+    const vars = readVars(mvtCanvas.parentElement, PLOT_CHROME);
+    const [xLo, xHi] = fn.domain;
+
+    let a = Number(mvtA.value);
+    let b = Number(mvtB.value);
+    if (b < a) [a, b] = [b, a];
+
+    const regs = stack(
+      ctx,
+      { top: 10, right: 14, bottom: 26, left: 42 },
+      width,
+      height,
+      [xLo, xHi],
+      [{ frac: 1, yRange: niceRange(fn.f, xLo, xHi) }],
+      vars
+    );
+    if (!regs) return;
+    const [reg] = regs;
+
+    plotCurve(ctx, reg, fn.f, vars["--series-1"]);
+
+    const { slope, points } = meanValuePoints(fn, a, b);
+
+    vLine(ctx, reg, a, vars["--muted"]);
+    vLine(ctx, reg, b, vars["--muted"]);
+
+    // the chord
+    if (Number.isFinite(slope)) {
+      ctx.strokeStyle = vars["--series-2"];
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(reg.sx(a), reg.sy(fn.f(a)));
+      ctx.lineTo(reg.sx(b), reg.sy(fn.f(b)));
+      ctx.stroke();
+      markPoint(ctx, reg, a, fn.f(a), vars["--series-2"], vars);
+      markPoint(ctx, reg, b, fn.f(b), vars["--series-2"], vars);
+    }
+
+    // every tangent parallel to it
+    for (const p of points) {
+      slopeLine(ctx, reg, p.x, p.y, slope, vars["--series-4"], 2, [6, 4]);
+      markPoint(ctx, reg, p.x, p.y, vars["--series-4"], vars);
+    }
+
+    labelRegion(ctx, reg, vars, `y = ${fn.label}`, [-8, -4, 0, 4, 8]);
+    xTickLabels(ctx, reg, vars);
+
+    mvtLegend.innerHTML = legendHTML([
+      ["割線（a と b を結ぶ）", vars["--series-2"]],
+      ["割線と平行な接線", vars["--series-4"]],
+    ]);
+
+    mvtSlope.textContent = fmt(slope, 5);
+    mvtC.textContent = points.length ? points.map((p) => p.x.toFixed(4)).join("、") : "—";
+    mvtNote.innerHTML = points.length
+      ? `区間 [${a.toFixed(2)}, ${b.toFixed(2)}] のどこかに、<strong>接線の傾きが割線とちょうど同じ</strong>になる点 c があります` +
+        `（ここでは ${points.length} 個）。a・b をどう動かしても必ず見つかる — これが平均値の定理です。` +
+        `f(a) = f(b) の場合が特にロルの定理で、そのとき傾きは 0、つまり水平な接線になります。`
+      : "区間の幅を広げてください（a < b が必要です）。";
+  }
+
+  /* ------------------------------------------------ panel 4: the integral -- */
 
   function drawIntegral() {
     const { ctx, width, height } = setupCanvasDPR(intCanvas);
     ctx.clearRect(0, 0, width, height);
-    const vars = readVars(intCanvas.parentElement, CHROME);
-
-    const pad = { top: 10, right: 14, bottom: 26, left: 40 };
-    const gap = 14;
-    const w = width - pad.left - pad.right;
-    const totalH = height - pad.top - pad.bottom - gap;
-    if (w <= 0 || totalH <= 0) return;
-    const hTop = totalH * 0.56;
-    const hBot = totalH - hTop;
-
+    const vars = readVars(intCanvas.parentElement, PLOT_CHROME);
     const [xLo, xHi] = fn.domain;
+
     let a = Number(aSlider.value);
     let b = Number(bSlider.value);
     if (b < a) [a, b] = [b, a];
@@ -302,9 +360,6 @@ export function initCalculusView() {
     const rule = ruleSelect.value;
 
     const area = areaFunction(fn.f, xLo, xHi, 900);
-    // S(x) is measured from a, so the vertical range has to come from the
-    // shifted values — otherwise the part below the axis (x < a, where the
-    // signed area is negative) gets clipped away.
     const offset = areaAt(area, a);
     let aLo = Infinity;
     let aHi = -Infinity;
@@ -315,110 +370,94 @@ export function initCalculusView() {
     }
     const aPad = (aHi - aLo) * 0.12 || 1;
 
-    const topReg = makeRegion(
+    const regs = stack(
       ctx,
-      { x: pad.left, y: pad.top, w, h: hTop },
+      { top: 10, right: 14, bottom: 26, left: 42 },
+      width,
+      height,
       [xLo, xHi],
-      niceRange(fn.f, xLo, xHi),
+      [
+        { frac: 0.56, yRange: niceRange(fn.f, xLo, xHi) },
+        { frac: 0.44, yRange: [aLo - aPad, aHi + aPad] },
+      ],
       vars
     );
-    const botReg = makeRegion(
-      ctx,
-      { x: pad.left, y: pad.top + hTop + gap, w, h: hBot },
-      [xLo, xHi],
-      [aLo - aPad, aHi + aPad],
-      vars
-    );
+    if (!regs) return;
+    const [top, bot] = regs;
 
-    // rectangles first, so the curve reads on top of them
+    let positive = 0;
+    let negative = 0;
     if (b > a) {
       const { rects } = riemann(fn.f, a, b, n, rule);
-      const baseY = topReg.sy(0);
-      ctx.fillStyle = vars["--series-1"];
-      ctx.globalAlpha = 0.28;
-      ctx.strokeStyle = vars["--series-1"];
-      ctx.lineWidth = 1;
+      const baseY = top.sy(0);
       const thin = rects.length > 120;
       for (const r of rects) {
-        const px = topReg.sx(r.left);
-        const pw = topReg.sx(r.left + r.w) - px;
-        const py = topReg.sy(r.height);
+        // Signed area: strips below the axis subtract, and are coloured to say so.
+        const up = r.height >= 0;
+        if (up) positive += r.height * r.w;
+        else negative += r.height * r.w;
+        ctx.fillStyle = up ? vars["--series-1"] : vars["--series-2"];
+        ctx.globalAlpha = 0.3;
+        const px = top.sx(r.left);
+        const pw = top.sx(r.left + r.w) - px;
+        const py = top.sy(r.height);
         ctx.fillRect(px, Math.min(py, baseY), Math.max(pw - (thin ? 0 : 1), 0.5), Math.abs(baseY - py));
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
     }
 
-    plotCurve(ctx, topReg, fn.f, vars["--series-2"]);
-    plotCurve(ctx, botReg, (x) => areaAt(area, x) - offset, vars["--series-3"]);
+    plotCurve(ctx, top, fn.f, vars["--series-3"]);
+    plotCurve(ctx, bot, (x) => areaAt(area, x) - offset, vars["--series-3"]);
 
-    // The fundamental theorem, drawn: the slope of the area curve at b is the
-    // height of f at b. Same number, two different pictures.
     const heightAtB = fn.f(b);
     const sB = areaAt(area, b) - offset;
     const span = (xHi - xLo) * 0.16;
     ctx.strokeStyle = vars["--series-4"];
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(botReg.sx(b - span), botReg.sy(sB - heightAtB * span));
-    ctx.lineTo(botReg.sx(b + span), botReg.sy(sB + heightAtB * span));
+    ctx.moveTo(bot.sx(b - span), bot.sy(sB - heightAtB * span));
+    ctx.lineTo(bot.sx(b + span), bot.sy(sB + heightAtB * span));
     ctx.stroke();
 
-    const vline = (reg, x, color) => {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      ctx.moveTo(reg.sx(x), reg.box.y);
-      ctx.lineTo(reg.sx(x), reg.box.y + reg.box.h);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    };
-    vline(topReg, a, vars["--muted"]);
-    vline(topReg, b, vars["--series-4"]);
-    vline(botReg, b, vars["--series-4"]);
+    vLine(ctx, top, a, vars["--muted"]);
+    vLine(ctx, top, b, vars["--series-4"]);
+    vLine(ctx, bot, b, vars["--series-4"]);
+    markPoint(ctx, top, b, heightAtB, vars["--series-3"], vars);
+    markPoint(ctx, bot, b, sB, vars["--series-3"], vars);
 
-    const mark = (reg, x, y, color) => {
-      ctx.fillStyle = vars["--surface-1"];
-      ctx.beginPath();
-      ctx.arc(reg.sx(x), reg.sy(y), 7, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(reg.sx(x), reg.sy(y), 4.5, 0, TAU);
-      ctx.fill();
-    };
-    mark(topReg, b, heightAtB, vars["--series-2"]);
-    mark(botReg, b, sB, vars["--series-3"]);
+    labelRegion(ctx, top, vars, `y = ${fn.label}`, [-8, -4, 0, 4, 8]);
+    labelRegion(ctx, bot, vars, "S(x) = a から x までの符号付き面積", [-9, -6, -3, 0, 3, 6, 9, 12]);
+    xTickLabels(ctx, bot, vars);
 
-    labelRegion(ctx, topReg, vars, `y = ${fn.label}`, [-4, -2, 0, 2, 4, 6, 8]);
-    labelRegion(ctx, botReg, vars, "S(x) = a から x までの面積", [-6, -3, 0, 3, 6, 9, 12]);
-
-    ctx.fillStyle = vars["--muted"];
-    ctx.font = TICK_FONT;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (let i = 0; i <= 4; i++) {
-      const x = xLo + ((xHi - xLo) * i) / 4;
-      ctx.fillText(x.toFixed(1), botReg.sx(x), botReg.box.y + botReg.box.h + 6);
-    }
-
-    intLegend.innerHTML =
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-1"]}"></span>短冊（${RULES[rule].label}で高さを取る）</span>` +
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-2"]}"></span>y = ${fn.label}</span>` +
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-3"]}"></span>面積関数 S(x)</span>` +
-      `<span class="legend-item"><span class="legend-dot" style="background:${vars["--series-4"]}"></span>S(x) の x = b での接線</span>`;
+    intLegend.innerHTML = legendHTML([
+      ["x軸より上の短冊（正）", vars["--series-1"]],
+      ["x軸より下の短冊（負）", vars["--series-2"]],
+      [`y = ${fn.label} と面積関数 S(x)`, vars["--series-3"]],
+      ["S(x) の x = b での接線", vars["--series-4"]],
+    ]);
 
     const sum = b > a ? riemann(fn.f, a, b, n, rule).total : 0;
     const truth = b > a ? exactArea(fn.f, a, b) : 0;
-    statSum.textContent = sum.toFixed(5);
-    statExact.textContent = truth.toFixed(5);
-    statErr.textContent = Math.abs(sum - truth).toFixed(5);
+    statSum.textContent = fmt(sum, 5);
+    statExact.textContent = fmt(truth, 5);
+    statErr.textContent = fmt(Math.abs(sum - truth), 5);
+    statSigned.textContent = `＋${fmt(positive, 3)} / −${fmt(Math.abs(negative), 3)}`;
+
+    const w = b > a ? (b - a) / n : 0;
+    riemannFormula.innerHTML =
+      `<code>Σ<sub>k=1..n</sub> f(x<sub>k</sub>)·Δx</code> ＝ 短冊の合計。ここでは ` +
+      `<code>Δx = (b − a)/n = ${fmt(w, 4)}</code>、<code>n = ${n}</code>。` +
+      `n → ∞ でこれが <code>∫<sub>a</sub><sup>b</sup> f(x)dx</code> になります。` +
+      `特に区間が [0, 1] のときは <code>lim (1/n)·Σ f(k/n) = ∫₀¹ f(x)dx</code> — ` +
+      `<strong>数列の和の極限が定積分になる</strong>という、入試で頻出の形です。`;
 
     ftcNote.innerHTML =
-      `x = b での <strong>S(x) の接線の傾き = ${heightAtB.toFixed(4)}</strong> は、` +
-      `上のグラフの <strong>f(b) の高さ = ${heightAtB.toFixed(4)}</strong> とぴったり同じ値です。` +
+      `x = b での <strong>S(x) の接線の傾き = ${fmt(heightAtB, 4)}</strong> は、` +
+      `上のグラフの <strong>f(b) の高さ = ${fmt(heightAtB, 4)}</strong> とぴったり同じ値です。` +
       `これが微積分学の基本定理 <strong>S′(x) = f(x)</strong> ——「面積を微分すると元の関数に戻る」の意味です。`;
   }
+
+  /* ------------------------------------------------------------- wiring -- */
 
   function refresh() {
     x0Out.textContent = Number(x0Slider.value).toFixed(2);
@@ -426,15 +465,24 @@ export function initCalculusView() {
     aOut.textContent = Number(aSlider.value).toFixed(2);
     bOut.textContent = Number(bSlider.value).toFixed(2);
     nOut.textContent = nSlider.value;
+    mvtAOut.textContent = Number(mvtA.value).toFixed(2);
+    mvtBOut.textContent = Number(mvtB.value).toFixed(2);
     drawDerivative();
+    drawShape();
+    drawMvt();
     drawIntegral();
   }
-
-  /* ------------------------------------------------------------ h → 0 -- */
 
   function stopAnim() {
     if (animHandle) cancelAnimationFrame(animHandle);
     animHandle = null;
+  }
+
+  function endShrink() {
+    shrinking = false;
+    shrinkBtn.textContent = "h → 0 にする";
+    shrinkBtn.classList.add("btn-primary");
+    stopAnim();
   }
 
   function shrinkTick() {
@@ -446,11 +494,8 @@ export function initCalculusView() {
     const min = Number(hSlider.min);
     if (h <= min) {
       hSlider.value = String(min);
-      shrinking = false;
-      shrinkBtn.textContent = "h → 0 にする";
-      shrinkBtn.classList.add("btn-primary");
+      endShrink();
       refresh();
-      animHandle = null;
       return;
     }
     hSlider.value = String(h);
@@ -460,10 +505,7 @@ export function initCalculusView() {
 
   shrinkBtn.addEventListener("click", () => {
     if (shrinking) {
-      shrinking = false;
-      shrinkBtn.textContent = "h → 0 にする";
-      shrinkBtn.classList.add("btn-primary");
-      stopAnim();
+      endShrink();
       return;
     }
     hSlider.value = hSlider.max;
@@ -480,18 +522,13 @@ export function initCalculusView() {
     refresh();
   });
 
-  [x0Slider, hSlider].forEach((el) =>
-    el.addEventListener("input", () => {
-      if (el === hSlider && shrinking) {
-        shrinking = false;
-        shrinkBtn.textContent = "h → 0 にする";
-        shrinkBtn.classList.add("btn-primary");
-        stopAnim();
-      }
-      refresh();
-    })
+  hSlider.addEventListener("input", () => {
+    if (shrinking) endShrink();
+    refresh();
+  });
+  [x0Slider, aSlider, bSlider, nSlider, mvtA, mvtB].forEach((el) =>
+    el.addEventListener("input", refresh)
   );
-  [aSlider, bSlider, nSlider].forEach((el) => el.addEventListener("input", refresh));
   ruleSelect.addEventListener("change", refresh);
 
   FUNCTIONS.forEach((f) => {
@@ -500,8 +537,8 @@ export function initCalculusView() {
     opt.textContent = f.label;
     funcSelect.appendChild(opt);
   });
-  funcSelect.value = "sq";
-  fn = functionByKey("sq");
+  funcSelect.value = "cubic";
+  fn = functionByKey("cubic");
   clampToDomain();
 
   return {
