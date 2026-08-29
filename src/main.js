@@ -12,13 +12,31 @@ import { initUnitCircleView } from "./views/unitcircle.js";
 import { initCalculusView } from "./views/calculus.js";
 import { initCalculusDeepView } from "./views/calculusDeep.js";
 import { initCalculusAdvView } from "./views/calculusAdv.js";
+import { initFractionView } from "./views/fraction.js";
+import { initRateView } from "./views/rate.js";
+import { initCircleAreaView } from "./views/circlearea.js";
+import { initNetView } from "./views/net.js";
+import { initLinearView } from "./views/linear.js";
+import { initProbabilityView } from "./views/probability.js";
+import { initPythagorasView } from "./views/pythagoras.js";
+import { initComplexView } from "./views/complex.js";
+import { initCltView } from "./views/clt.js";
 
 const VIEWS = [
+  "fraction",
+  "rate",
+  "circlearea",
+  "net",
+  "linear",
+  "probability",
   "inscribed",
+  "pythagoras",
   "unitcircle",
   "calculus",
   "calculusDeep",
   "calculusAdv",
+  "complex",
+  "clt",
   "collatz",
   "aliquot",
   "logistic",
@@ -28,10 +46,19 @@ const VIEWS = [
   "continued",
   "zeta",
 ];
-const DEFAULT_VIEW = "inscribed";
+const DEFAULT_VIEW = "fraction";
 
 const registry = {
+  fraction: initFractionView(),
+  rate: initRateView(),
+  circlearea: initCircleAreaView(),
+  net: initNetView(),
+  linear: initLinearView(),
+  probability: initProbabilityView(),
   inscribed: initInscribedView(),
+  pythagoras: initPythagorasView(),
+  complex: initComplexView(),
+  clt: initCltView(),
   unitcircle: initUnitCircleView(),
   calculus: initCalculusView(),
   calculusDeep: initCalculusDeepView(),

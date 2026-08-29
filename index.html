@@ -7,7 +7,7 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta
       name="description"
-      content="円周角の定理・単位円と三角関数・微分と積分といった学校数学から、コラッツ予想・ゴールドバッハ・ゼータ零点などの未解決問題まで、動かして確かめるインタラクティブな数学ツール"
+      content="分数の割り算・円の面積・展開図といった小学算数から、三平方の定理・確率、単位円・微積分・複素数平面・中心極限定理、さらにコラッツ予想やゼータ零点などの未解決問題まで、動かして確かめるインタラクティブな数学ツール"
     />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -22,12 +22,27 @@
         </div>
         <nav class="tabs" aria-label="テーマ切替">
           <div class="tab-group">
-            <span class="tab-group-label">学校数学</span>
+            <span class="tab-group-label">小学校</span>
+            <button type="button" class="tab" data-view="fraction">分数の割り算</button>
+            <button type="button" class="tab" data-view="rate">割合と速さ</button>
+            <button type="button" class="tab" data-view="circlearea">円の面積</button>
+            <button type="button" class="tab" data-view="net">展開図と立体</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">中学校</span>
+            <button type="button" class="tab" data-view="linear">一次関数と連立方程式</button>
+            <button type="button" class="tab" data-view="probability">確率と大数の法則</button>
             <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
+            <button type="button" class="tab" data-view="pythagoras">三平方の定理</button>
+          </div>
+          <div class="tab-group">
+            <span class="tab-group-label">高校</span>
             <button type="button" class="tab" data-view="unitcircle">単位円と三角関数</button>
             <button type="button" class="tab" data-view="calculus">微分と積分</button>
             <button type="button" class="tab" data-view="calculusDeep">微分を深める</button>
             <button type="button" class="tab" data-view="calculusAdv">微積の発展</button>
+            <button type="button" class="tab" data-view="complex">複素数平面</button>
+            <button type="button" class="tab" data-view="clt">中心極限定理</button>
           </div>
           <div class="tab-group">
             <span class="tab-group-label">数の探検</span>
@@ -44,6 +59,548 @@
       </header>
 
       <main>
+        <!-- ========================== 分数の割り算 ========================== -->
+        <section class="view" data-view="fraction" hidden>
+          <p class="subtitle">
+            分数の割り算は「ひっくり返して掛ける」と習いますが、<strong>なぜそうしていいのか</strong>は
+            たいてい説明されないままです。<code>2/3 ÷ 1/4</code> を
+            「2/3 の中に 1/4 が<strong>いくつ入るか</strong>」として数えると、答えが 8/3 になる理由が目で見えます。（小6）
+          </p>
+
+          <section class="panel" aria-labelledby="frHeading">
+            <h2 id="frHeading">いくつ入るか、数えてみる</h2>
+            <p class="panel-desc">
+              長いバーが「わられる数」、その下に並ぶタイルが「わる数」です。タイルが何個ぶん入るかが答えになります。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>わられる数</span>
+                <input id="frA" type="number" min="1" max="24" step="1" value="2" aria-label="わられる数の分子" />
+              </label>
+              <span class="frac-slash">/</span>
+              <label class="field field-inline">
+                <span class="visually-hidden">分母</span>
+                <input id="frB" type="number" min="1" max="24" step="1" value="3" aria-label="わられる数の分母" />
+              </label>
+              <span class="frac-div">÷</span>
+              <label class="field field-inline">
+                <span>わる数</span>
+                <input id="frC" type="number" min="1" max="24" step="1" value="1" aria-label="わる数の分子" />
+              </label>
+              <span class="frac-slash">/</span>
+              <label class="field field-inline">
+                <span class="visually-hidden">分母</span>
+                <input id="frD" type="number" min="1" max="24" step="1" value="4" aria-label="わる数の分母" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="式のプリセット">
+              <span class="preset-label">例:</span>
+              <span id="frPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap short">
+              <canvas id="frCanvas" aria-label="分数の割り算の面積図" role="img"></canvas>
+            </div>
+
+            <p id="frNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">答え</span>
+                <span id="frAnswer" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">帯分数で</span>
+                <span id="frMixed" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">入ったタイル</span>
+                <span id="frCount" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="frWhyHeading">
+            <h2 id="frWhyHeading">なぜ「ひっくり返して掛ける」のか</h2>
+            <p class="panel-desc">
+              かぎは「<strong>1 の中にわる数がいくつ入るか</strong>」です。その個数がちょうど逆数になっています。
+            </p>
+
+            <div class="chart-wrap short">
+              <canvas id="frUnit" aria-label="1 の中にわる数がいくつ入るか" role="img"></canvas>
+            </div>
+
+            <ol id="frSteps" class="step-list"></ol>
+            <p id="frWhyNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ========================== 割合と速さ ========================== -->
+        <section class="view" data-view="rate" hidden>
+          <p class="subtitle">
+            「もとにする量」がどれか分からなくなる——小学校算数の最大の難所です。
+            <strong>2本の数直線を上下に並べて連動させる</strong>と、「くもわ」「はじき」を覚えなくても
+            どれを掛けてどれで割るのかが図から読めます。速さは<strong>ダイヤグラム</strong>にすると旅人算が一目で見通せます。（小5〜6）
+          </p>
+
+          <section class="panel" aria-labelledby="rtHeading">
+            <h2 id="rtHeading">二重数直線</h2>
+            <p class="panel-desc">
+              上が量、下が割合です。<strong>割合の 1 の真上にあるのが「もとにする量」</strong>。
+              分からないものを選ぶと、残りの2つから計算されます。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>求めるもの</span>
+                <select id="rtUnknown">
+                  <option value="compare">くらべる量</option>
+                  <option value="ratio">割合</option>
+                  <option value="base">もとにする量</option>
+                </select>
+              </label>
+              <label class="field field-inline">
+                <span>単位</span>
+                <select id="rtUnit">
+                  <option value="mL">mL</option>
+                  <option value="円">円</option>
+                  <option value="人">人</option>
+                  <option value="g">g</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>もとにする量 = <output id="rtBaseOut" class="mono">800</output></span>
+                <input id="rtBase" type="range" min="0" max="2000" step="10" value="800" />
+              </label>
+              <label class="field field-grow">
+                <span>割合 = <output id="rtRatioOut" class="mono">0.35</output></span>
+                <input id="rtRatio" type="range" min="0" max="2" step="0.01" value="0.35" />
+              </label>
+              <label class="field field-grow">
+                <span>くらべる量 = <output id="rtCompareOut" class="mono">280</output></span>
+                <input id="rtCompare" type="range" min="0" max="2000" step="10" value="280" />
+              </label>
+            </div>
+
+            <div class="chart-wrap short">
+              <canvas id="rtCanvas" aria-label="二重数直線" role="img"></canvas>
+            </div>
+
+            <p id="rtNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">式</span>
+                <span id="rtFormula" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">答え</span>
+                <span id="rtAnswer" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">歩合で</span>
+                <span id="rtBuai" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="rtDiaHeading">
+            <h2 id="rtDiaHeading">速さのダイヤグラム（旅人算）</h2>
+            <p class="panel-desc">
+              横が時間、縦が道のり。1人の動きが1本の線になり、<strong>線が交わったところが「出会う」瞬間</strong>です。
+              線の傾きがそのまま速さになります。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="問題のプリセット">
+              <span class="preset-label">問題:</span>
+              <span id="rtPresets" class="preset-chips"></span>
+            </div>
+
+            <p id="rtQuestion" class="note"></p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span><output id="rtNameA" class="mono">太郎</output> の速さ = 分速 <output id="rtSpeedAOut" class="mono">70</output> m</span>
+                <input id="rtSpeedA" type="range" min="20" max="200" step="5" value="70" />
+              </label>
+              <label class="field field-grow">
+                <span><output id="rtNameB" class="mono">花子</output> の速さ = 分速 <output id="rtSpeedBOut" class="mono">50</output> m</span>
+                <input id="rtSpeedB" type="range" min="20" max="200" step="5" value="50" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="rtDia" aria-label="距離と時間のダイヤグラム" role="img"></canvas>
+            </div>
+            <div id="rtDiaLegend" class="legend"></div>
+
+            <p id="rtDiaNote" class="note"></p>
+            <p id="rtHint" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ============================ 円の面積 ============================ -->
+        <section class="view" data-view="circlearea" hidden>
+          <p class="subtitle">
+            円を細い扇形に切って交互に並べかえると、だんだん長方形に近づきます。
+            <strong>たて r ・よこ 半周ぶんの πr</strong> の長方形になるので、円の面積は
+            <code>πr × r = πr²</code>。分割数を増やすと本当に長方形になっていく様子を確かめてください。（小6）
+          </p>
+
+          <section class="panel" aria-labelledby="crHeading">
+            <h2 id="crHeading">切って並べかえる</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>分割数 n = <output id="crNOut" class="mono">8</output></span>
+                <input id="crN" type="range" min="4" max="180" step="2" value="8" />
+              </label>
+              <label class="field field-grow">
+                <span>並べかえ = <output id="crTOut" class="mono">0%</output></span>
+                <input id="crT" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+              <button type="button" id="crPlay" class="btn btn-primary">並べかえる</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="crGuide" type="checkbox" checked />
+                <span>たて r ・よこ πr の目安を出す</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="crCanvas" aria-label="円を扇形に切って並べかえる" role="img"></canvas>
+            </div>
+
+            <p id="crNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">並べた図形のよこ</span>
+                <span id="crWidth" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">ふちのギザギザ</span>
+                <span id="crWobble" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">まっすぐに直した面積</span>
+                <span id="crArea" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="crTableHeading">
+            <h2 id="crTableHeading">分割を増やすとどこまで近づくか</h2>
+            <p class="panel-desc">
+              扇形の弧をまっすぐな弦に置きかえた図形（内接多角形）の面積です。かならず πr² より小さく、
+              分割を倍にすると誤差がおよそ 1/4 になります。
+            </p>
+            <div class="table-wrap">
+              <table class="data-table" id="crTable">
+                <thead>
+                  <tr><th>分割数 n</th><th>面積</th><th>πr² との差</th><th>誤差</th><th>ギザギザの高さ</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- =========================== 展開図と立体 =========================== -->
+        <section class="view" data-view="net" hidden>
+          <p class="subtitle">
+            平らな展開図がゆっくり折り上がって立体になります。どの面がどこへ行くのか、
+            どの辺とどの辺がくっつくのかが、<strong>折る途中を見ると</strong>はっきりします。
+            折りあがった立体では、いつでも <code>頂点 − 辺 + 面 = 2</code>（オイラーの多面体定理）。（小4〜6）
+          </p>
+
+          <section class="panel" aria-labelledby="ntHeading">
+            <h2 id="ntHeading">折りたたんでみる</h2>
+
+            <div class="preset-row" role="group" aria-label="立体の種類">
+              <span class="preset-label">立体:</span>
+              <span id="ntPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>折りぐあい = <output id="ntFoldOut" class="mono">0%</output></span>
+                <input id="ntFold" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>向き = <output id="ntSpinOut" class="mono">30°</output></span>
+                <input id="ntSpin" type="range" min="0" max="360" step="1" value="30" />
+              </label>
+              <button type="button" id="ntPlay" class="btn btn-primary">折る</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="ntLabels" type="checkbox" checked />
+                <span>面に番号をふる</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="ntCanvas" aria-label="展開図が折れて立体になる様子" role="img"></canvas>
+            </div>
+
+            <p id="ntNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">頂点 V</span>
+                <span id="ntV" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">辺 E</span>
+                <span id="ntE" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">面 F</span>
+                <span id="ntF" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">V − E + F</span>
+                <span id="ntEuler" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ====================== 一次関数と連立方程式 ====================== -->
+        <section class="view" data-view="linear" hidden>
+          <p class="subtitle">
+            連立方程式の解は、<strong>2本の直線の交点</strong>です。だから
+            平行なら「解なし」、ぴったり重なれば「解は無数」。式の上では意味が取りにくいこの2つが、
+            グラフの上では当たり前のことになります。（中2）
+          </p>
+
+          <section class="panel" aria-labelledby="lnHeading">
+            <h2 id="lnHeading">2本の直線を動かす</h2>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>① y = <output id="lnA1Out" class="mono">1.0</output> x + <output id="lnB1Out" class="mono">1.0</output></span>
+                <input id="lnA1" type="range" min="-3" max="3" step="0.25" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span class="visually-hidden">① の切片</span>
+                <input id="lnB1" type="range" min="-6" max="6" step="0.5" value="1" />
+              </label>
+            </div>
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>② y = <output id="lnA2Out" class="mono">-0.5</output> x + <output id="lnB2Out" class="mono">4.0</output></span>
+                <input id="lnA2" type="range" min="-3" max="3" step="0.25" value="-0.5" />
+              </label>
+              <label class="field field-grow">
+                <span class="visually-hidden">② の切片</span>
+                <input id="lnB2" type="range" min="-6" max="6" step="0.5" value="4" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="解のようすのプリセット">
+              <span class="preset-label">ためす:</span>
+              <span id="lnPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="lnCanvas" aria-label="2本の直線と交点" role="img"></canvas>
+            </div>
+
+            <p id="lnNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">解のようす</span>
+                <span id="lnKind" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">交点 x</span>
+                <span id="lnX" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">交点 y</span>
+                <span id="lnY" class="stat-value">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="lnElimHeading">
+            <h2 id="lnElimHeading">加減法で解く</h2>
+            <p class="panel-desc">
+              <code>ax + by = c</code> の形で係数を入れると、消去のしかたと答えを分数のまま出します。
+              上のグラフとちがって、こちらは<strong>ぴったりの値</strong>です。
+            </p>
+
+            <div class="controls-row">
+              <span class="eq-tag">①</span>
+              <label class="field field-inline"><span class="visually-hidden">①のx係数</span><input id="lnEa1" type="number" step="1" value="2" aria-label="式1のxの係数" /></label>
+              <span class="eq-op">x +</span>
+              <label class="field field-inline"><span class="visually-hidden">①のy係数</span><input id="lnEb1" type="number" step="1" value="3" aria-label="式1のyの係数" /></label>
+              <span class="eq-op">y =</span>
+              <label class="field field-inline"><span class="visually-hidden">①の右辺</span><input id="lnEc1" type="number" step="1" value="13" aria-label="式1の右辺" /></label>
+            </div>
+            <div class="controls-row">
+              <span class="eq-tag">②</span>
+              <label class="field field-inline"><span class="visually-hidden">②のx係数</span><input id="lnEa2" type="number" step="1" value="5" aria-label="式2のxの係数" /></label>
+              <span class="eq-op">x +</span>
+              <label class="field field-inline"><span class="visually-hidden">②のy係数</span><input id="lnEb2" type="number" step="1" value="-2" aria-label="式2のyの係数" /></label>
+              <span class="eq-op">y =</span>
+              <label class="field field-inline"><span class="visually-hidden">②の右辺</span><input id="lnEc2" type="number" step="1" value="4" aria-label="式2の右辺" /></label>
+            </div>
+
+            <ol id="lnElimSteps" class="step-list"></ol>
+            <p id="lnElimNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ======================== 確率と大数の法則 ======================== -->
+        <section class="view" data-view="probability" hidden>
+          <p class="subtitle">
+            「確率 1/6」は、1回や6回では何も言っていません。回数を増やすと<strong>相対度数</strong>が 1/6 に近づく——
+            それが大数の法則です。ただし<strong>回数の差そのものは縮まりません</strong>。
+            よく混同されるこの2つを並べて出しました。（中2）
+          </p>
+
+          <section class="panel" aria-labelledby="pbHeading">
+            <h2 id="pbHeading">振ってみる</h2>
+
+            <div class="preset-row" role="group" aria-label="実験の種類">
+              <span class="preset-label">実験:</span>
+              <span id="pbPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <button type="button" id="pb1" class="btn">+1 回</button>
+              <button type="button" id="pb10" class="btn">+10 回</button>
+              <button type="button" id="pb100" class="btn">+100 回</button>
+              <button type="button" id="pb1000" class="btn">+1000 回</button>
+              <button type="button" id="pb100000" class="btn btn-primary">+10万回</button>
+              <button type="button" id="pbReset" class="btn btn-ghost">リセット</button>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="pbBars" aria-label="出た目の相対度数と理論値" role="img"></canvas>
+            </div>
+            <div id="pbLegend" class="legend"></div>
+
+            <p id="pbNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">投げた回数</span>
+                <span id="pbN" class="stat-value">0</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">相対度数のずれ（最大）</span>
+                <span id="pbRelGap" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">回数のずれ（最大）</span>
+                <span id="pbCountGap" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="pbConvHeading">
+            <h2 id="pbConvHeading">相対度数はどう近づくか</h2>
+            <p class="panel-desc">
+              横は投げた回数（対数目盛）、縦は<output id="pbWatchLabel" class="mono">1 の目</output>の相対度数。
+              はじめは大きく暴れますが、右へ行くほど理論値の線にはりつきます。
+            </p>
+            <div class="chart-wrap">
+              <canvas id="pbConv" aria-label="相対度数の収束" role="img"></canvas>
+            </div>
+            <p id="pbConvNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ========================== 三平方の定理 ========================== -->
+        <section class="view" data-view="pythagoras" hidden>
+          <p class="subtitle">
+            <code>a² + b² = c²</code> は、<strong>面積を動かして見せる</strong>と証明になります。
+            2つの見せ方を用意しました。どちらも、動かしているあいだ<strong>面積がまったく変わらない</strong>ことが要です。（中3）
+          </p>
+
+          <section class="panel" aria-labelledby="pyHeading">
+            <h2 id="pyHeading">同じ正方形の中で、三角形をずらす</h2>
+            <p class="panel-desc">
+              一辺 a + b の正方形に、同じ直角三角形を4枚。置き方を変えると、
+              あいた場所が <strong>a² と b²</strong> から <strong>c² ひとつ</strong>に変わります。
+              三角形は<strong>回転も裏返しもせず、平行移動するだけ</strong>です。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>ずらす = <output id="pyTOut" class="mono">0%</output></span>
+                <input id="pyT" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>三角形の形 a : b = <output id="pyShapeOut" class="mono">3 : 4</output></span>
+                <input id="pyShape" type="range" min="0.25" max="2.6" step="0.05" value="0.75" />
+              </label>
+              <button type="button" id="pyPlay" class="btn btn-primary">動かす</button>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="pyCanvas" aria-label="4つの直角三角形の組みかえ" role="img"></canvas>
+            </div>
+
+            <p id="pyNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">a² + b²</span>
+                <span id="pySum" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">c²</span>
+                <span id="pyC2" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">差</span>
+                <span id="pyDiff" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="pyEuclidHeading">
+            <h2 id="pyEuclidHeading">ユークリッドの証明（等積変形）</h2>
+            <p class="panel-desc">
+              脚の上の正方形を、<strong>面積を変えない3つの動き</strong>だけで斜辺の正方形へ流し込みます。
+              C から斜辺におろした垂線が、c² をちょうど b² と a² に分けています。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>手順 = <output id="pyEStageOut" class="mono">はじめ</output></span>
+                <input id="pyEt" type="range" min="0" max="3" step="0.01" value="0" />
+              </label>
+              <label class="field field-grow">
+                <span>三角形の形 = <output id="pyEShapeOut" class="mono">3 : 4</output></span>
+                <input id="pyEShape" type="range" min="0.3" max="2.4" step="0.05" value="0.75" />
+              </label>
+              <button type="button" id="pyEPlay" class="btn btn-primary">流し込む</button>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="pyEuclid" aria-label="ユークリッドの等積変形" role="img"></canvas>
+            </div>
+
+            <p id="pyECaption" class="note"></p>
+            <p id="pyENote" class="note"></p>
+          </section>
+        </section>
+
         <!-- ============================ 円周角の定理 ============================ -->
         <section class="view" data-view="inscribed" hidden>
           <p class="subtitle">
@@ -709,6 +1266,173 @@
                 </thead>
                 <tbody></tbody>
               </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- =========================== 複素数平面 =========================== -->
+        <section class="view" data-view="complex" hidden>
+          <p class="subtitle">
+            複素数を掛けるとは、<strong>回転して、伸ばす</strong>ということです。
+            <code>arg(zw) = arg z + arg w</code>、<code>|zw| = |z||w|</code> —— 角は足し算、長さは掛け算。
+            「よく分からない数」が「回転の道具」に変わります。（数学C）
+          </p>
+
+          <section class="panel" aria-labelledby="cxHeading">
+            <h2 id="cxHeading">z と w をドラッグする</h2>
+            <p class="panel-desc">
+              青い点 z と橙の点 w を動かしてください。緑の点が積 zw です。
+              w を単位円の上に置くと、zw は<strong>長さを変えずに回るだけ</strong>になります。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="cxUnitW" type="checkbox" />
+                <span>w を単位円上に固定する（純粋な回転）</span>
+              </label>
+              <button type="button" id="cxSpin" class="btn">w を1周させる</button>
+              <button type="button" id="cxReset" class="btn btn-ghost">最初に戻す</button>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="cxCanvas" aria-label="複素数平面上の z, w, zw" role="img"></canvas>
+            </div>
+
+            <p id="cxNote" class="note"></p>
+
+            <div class="table-wrap">
+              <table class="data-table" id="cxTable">
+                <thead>
+                  <tr><th></th><th>実部</th><th>虚部</th><th>絶対値</th><th>偏角</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="cxRootHeading">
+            <h2 id="cxRootHeading">1 の n 乗根と、累乗のらせん</h2>
+            <p class="panel-desc">
+              <code>zⁿ = 1</code> の解は、単位円を n 等分した<strong>正 n 角形の頂点</strong>にきれいに並びます。
+              下のスライダーで z を動かすと、z・z²・z³… がどこへ行くのかも見えます。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>n = <output id="cxNOut" class="mono">5</output></span>
+                <input id="cxN" type="range" min="2" max="12" step="1" value="5" />
+              </label>
+              <label class="field field-grow">
+                <span>累乗を見る z の |z| = <output id="cxRadOut" class="mono">1.00</output></span>
+                <input id="cxRad" type="range" min="0.6" max="1.35" step="0.01" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>z の偏角 = <output id="cxArgOut" class="mono">40°</output></span>
+                <input id="cxArg" type="range" min="0" max="180" step="1" value="40" />
+              </label>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="cxRoots" aria-label="1 の n 乗根と累乗の軌跡" role="img"></canvas>
+            </div>
+
+            <p id="cxRootNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ========================= 中心極限定理 ========================= -->
+        <section class="view" data-view="clt" hidden>
+          <p class="subtitle">
+            釘に当たって左右にはねるだけのボールが、積み上がると<strong>きれいな釣鐘</strong>になります。
+            さらに驚くのはその先で、<strong>どんな形の分布から取っても</strong>、
+            何個かの平均をとるとやはり釣鐘に近づきます——中心極限定理です。（数学B）
+          </p>
+
+          <section class="panel" aria-labelledby="clHeading">
+            <h2 id="clHeading">ゴルトンボード</h2>
+            <p class="panel-desc">
+              各段で左右に 1/2 ずつ。落ちた場所は「右に何回はねたか」で決まるので、
+              山の高さは二項分布そのものです。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>段数 = <output id="clRowsOut" class="mono">12</output></span>
+                <input id="clRows" type="range" min="4" max="20" step="1" value="12" />
+              </label>
+              <button type="button" id="clDrop" class="btn btn-primary">ボールを落とす</button>
+              <button type="button" id="clDrop1000" class="btn">一気に 1000 個</button>
+              <button type="button" id="clReset" class="btn btn-ghost">リセット</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="clCurve" type="checkbox" checked />
+                <span>正規分布の曲線を重ねる</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap xtall">
+              <canvas id="clBoard" aria-label="ゴルトンボード" role="img"></canvas>
+            </div>
+
+            <p id="clNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">落ちたボール</span>
+                <span id="clCount" class="stat-value">0</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">平均の位置</span>
+                <span id="clMean" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">標準偏差（理論 √n/2）</span>
+                <span id="clSd" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="clMeanHeading">
+            <h2 id="clMeanHeading">どんな分布からでも、平均をとると</h2>
+            <p class="panel-desc">
+              上段が元の分布、下段が「n 個の平均」を何度もとったときの分布です。
+              元がどんな形でも、n を増やすと下段は釣鐘になり、幅は <code>σ / √n</code> に縮みます。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="元の分布">
+              <span class="preset-label">元の分布:</span>
+              <span id="clSources" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>1 回の標本の大きさ n = <output id="clNOut" class="mono">1</output></span>
+                <input id="clN" type="range" min="1" max="40" step="1" value="1" />
+              </label>
+              <button type="button" id="clResample" class="btn">取り直す</button>
+            </div>
+
+            <div class="chart-wrap xtall">
+              <canvas id="clMeans" aria-label="元の分布と標本平均の分布" role="img"></canvas>
+            </div>
+
+            <p id="clMeanNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">標本平均の平均</span>
+                <span id="clMm" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">標本平均の標準偏差</span>
+                <span id="clMsd" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">理論値 σ / √n</span>
+                <span id="clTheory" class="stat-value stat-value-sm">—</span>
+              </div>
             </div>
           </section>
         </section>
