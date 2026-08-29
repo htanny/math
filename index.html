@@ -26,6 +26,8 @@
             <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
             <button type="button" class="tab" data-view="unitcircle">単位円と三角関数</button>
             <button type="button" class="tab" data-view="calculus">微分と積分</button>
+            <button type="button" class="tab" data-view="calculusDeep">微分を深める</button>
+            <button type="button" class="tab" data-view="calculusAdv">微積の発展</button>
           </div>
           <div class="tab-group">
             <span class="tab-group-label">数の探検</span>
@@ -194,8 +196,8 @@
         <!-- ============================ 微分と積分 ============================ -->
         <section class="view" data-view="calculus" hidden>
           <p class="subtitle">
-            微分は<strong>接線の傾き</strong>、積分は<strong>面積</strong>。そして面積を微分すると元の関数に戻る
-            （微積分学の基本定理）。この3つを、同じ関数の上で連動させて見られるようにしました。（数学II・III）
+            微分は<strong>接線の傾き</strong>、積分は<strong>符号付き面積</strong>。そして面積を微分すると元の関数に戻る
+            （微積分学の基本定理）。増減表・平均値の定理まで、同じ関数の上で連動させて見られます。（数学II・III）
           </p>
 
           <div class="controls-row">
@@ -245,11 +247,75 @@
             </div>
           </section>
 
+          <section class="panel" aria-labelledby="caShapeHeading">
+            <h2 id="caShapeHeading">増減表とグラフの概形</h2>
+            <p class="panel-desc">
+              y′ の符号が変わるところが<strong>極値</strong>、y″ の符号が変わるところが<strong>変曲点</strong>。
+              3つのグラフを縦に揃えてあるので、縦線が同じ x で並ぶのが見えます。下の表は 3 つのグラフから自動生成した増減表です。
+            </p>
+
+            <div class="chart-wrap xtall">
+              <canvas id="caShapeCanvas" aria-label="関数と一階・二階導関数のグラフ" role="img"></canvas>
+            </div>
+            <div id="caShapeLegend" class="legend"></div>
+            <p id="caShapeSummary" class="note"></p>
+
+            <div class="table-wrap">
+              <table class="data-table" id="caShapeTable">
+                <thead>
+                  <tr>
+                    <th>x の区間</th>
+                    <th>y′</th>
+                    <th>y″</th>
+                    <th>グラフの様子</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="caMvtHeading">
+            <h2 id="caMvtHeading">平均値の定理</h2>
+            <p class="panel-desc">
+              区間の両端を結ぶ割線に対し、<strong>それと平行な接線を持つ点 c が区間の内側に必ず存在する</strong>。
+              a・b をどう動かしても c が見つかることを確かめてください。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>左端 a = <output id="caMvtAOut" class="mono">-2.00</output></span>
+                <input id="caMvtA" type="range" min="-3" max="3" step="0.01" value="-2" />
+              </label>
+              <label class="field field-grow">
+                <span>右端 b = <output id="caMvtBOut" class="mono">2.00</output></span>
+                <input id="caMvtB" type="range" min="-3" max="3" step="0.01" value="2" />
+              </label>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="caMvtCanvas" aria-label="平均値の定理の作図" role="img"></canvas>
+            </div>
+            <div id="caMvtLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">割線の傾き</span>
+                <span id="caMvtSlope" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">それと同じ傾きを持つ c</span>
+                <span id="caMvtC" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+            <p id="caMvtNote" class="note"></p>
+          </section>
+
           <section class="panel" aria-labelledby="caIntHeading">
             <h2 id="caIntHeading">積分 ＝ 面積、そして基本定理</h2>
             <p class="panel-desc">
-              短冊の数を増やすと、その合計は本当の面積に近づきます（区分求積法）。
-              下のグラフは「a から x までの面積」を x の関数として描いたもの。<strong>その接線の傾きが、上の関数の高さと一致します。</strong>
+              短冊の数を増やすと、その合計は本当の面積に近づきます（区分求積法）。x軸より下の短冊は<strong>負</strong>として数えます。
+              下のグラフは「a から x までの符号付き面積」で、<strong>その接線の傾きが上の関数の高さと一致します。</strong>
             </p>
 
             <div class="controls-row slider-row">
@@ -295,9 +361,355 @@
                 <span class="stat-label">ずれ</span>
                 <span id="caErr" class="stat-value">—</span>
               </div>
+              <div class="stat-tile">
+                <span class="stat-label">正の面積 / 負の面積</span>
+                <span id="caSigned" class="stat-value stat-value-sm">—</span>
+              </div>
             </div>
 
+            <p id="caRiemann" class="note"></p>
             <p id="caFtcNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ============================ 微分を深める ============================ -->
+        <section class="view" data-view="calculusDeep" hidden>
+          <p class="subtitle">
+            公式として暗記されがちなところを、意味に戻して見ます。
+            <strong>どこで微分できなくなるのか</strong>、<strong>定義の h はなぜ消えるのか</strong>、
+            <strong>積の微分に項が2つある理由</strong>、<strong>連鎖律がなぜ掛け算なのか</strong>。（数学II・III）
+          </p>
+
+          <section class="panel" aria-labelledby="cdRoughHeading">
+            <h2 id="cdRoughHeading">微分できない点</h2>
+            <p class="panel-desc">
+              どれも x = 0 で<strong>連続</strong>ですが、微分できるとは限りません。
+              左からの割線と右からの割線が、h を小さくしたときに同じ値に近づくかどうかを見てください。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>関数</span>
+                <select id="cdRough"></select>
+              </label>
+              <label class="field field-grow">
+                <span>h = <output id="cdRoughHOut" class="mono">0.3000</output></span>
+                <input id="cdRoughH" type="range" min="0.002" max="0.5" step="0.002" value="0.3" />
+              </label>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="cdRoughCanvas" aria-label="左右の割線の比較" role="img"></canvas>
+            </div>
+            <div id="cdRoughLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">左からの割線の傾き</span>
+                <span id="cdRoughLeft" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">右からの割線の傾き</span>
+                <span id="cdRoughRight" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">x = 0 で</span>
+                <span id="cdRoughVerdict" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+            <p id="cdRoughNote" class="note"></p>
+
+            <div class="table-wrap">
+              <table class="data-table" id="cdRoughTable">
+                <thead>
+                  <tr><th>h</th><th>左からの傾き</th><th>右からの傾き</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="cdDefHeading">
+            <h2 id="cdDefHeading">定義から導関数を求める</h2>
+            <p class="panel-desc">
+              <code>lim (f(x+h) − f(x)) / h</code> を実際に計算します。山場は<strong>h で約分するところ</strong>。
+              なぜ約分してよいのか、そのあとで h → 0 とできるのはなぜかを、数値と並べて確かめられます。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>関数</span>
+                <select id="cdDef"></select>
+              </label>
+              <label class="field field-grow">
+                <span>x = <output id="cdDefXOut" class="mono">1.00</output></span>
+                <input id="cdDefX" type="range" min="-2" max="2.5" step="0.01" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>h = <output id="cdDefHOut" class="mono">0.2000</output></span>
+                <input id="cdDefH" type="range" min="0.0001" max="0.6" step="0.0001" value="0.2" />
+              </label>
+            </div>
+
+            <ol id="cdDefSteps" class="step-list"></ol>
+            <p id="cdDefNumeric" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="cdProdHeading">
+            <h2 id="cdProdHeading">積の微分を面積で見る</h2>
+            <p class="panel-desc">
+              縦 g・横 f の長方形の面積が f·g です。x を dx だけ動かすと長方形は右と上に伸び、
+              <strong>3つの部分</strong>が増えます。角の小さな長方形だけが dx² のオーダーで、これが消えると
+              <code>(fg)′ = f′g + fg′</code> になります。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>f と g</span>
+                <select id="cdProd"></select>
+              </label>
+              <label class="field field-grow">
+                <span>x = <output id="cdProdXOut" class="mono">1.00</output></span>
+                <input id="cdProdX" type="range" min="0" max="2.5" step="0.01" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>dx = <output id="cdProdDxOut" class="mono">0.400</output></span>
+                <input id="cdProdDx" type="range" min="0.005" max="0.6" step="0.005" value="0.4" />
+              </label>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="cdProdCanvas" aria-label="積の微分の面積図" role="img"></canvas>
+            </div>
+            <div id="cdProdLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">f · dg</span>
+                <span id="cdProdFdg" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">g · df</span>
+                <span id="cdProdGdf" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">df · dg（角）</span>
+                <span id="cdProdCorner" class="stat-value">—</span>
+              </div>
+            </div>
+            <p id="cdProdNote" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="cdChainHeading">
+            <h2 id="cdChainHeading">連鎖律 ＝ 変化率の掛け算</h2>
+            <p class="panel-desc">
+              x が動くと u が動き、u が動くと y が動く。<strong>それぞれの「何倍動くか」を掛け算したものが、
+              x から見た y の変化率</strong>です。3本の数直線の動く幅を見比べてください。
+            </p>
+
+            <div class="controls-row">
+              <label class="field field-inline">
+                <span>合成関数</span>
+                <select id="cdChain"></select>
+              </label>
+              <label class="field field-grow">
+                <span>x = <output id="cdChainXOut" class="mono">1.00</output></span>
+                <input id="cdChainX" type="range" min="-2" max="2" step="0.01" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>Δx = <output id="cdChainDxOut" class="mono">0.200</output></span>
+                <input id="cdChainDx" type="range" min="0.002" max="0.4" step="0.002" value="0.2" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="cdChainCanvas" aria-label="連鎖律の3本の数直線" role="img"></canvas>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">du/dx</span>
+                <span id="cdChainInner" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">dy/du</span>
+                <span id="cdChainOuter" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">掛け算 dy/dx</span>
+                <span id="cdChainProduct" class="stat-value">—</span>
+              </div>
+            </div>
+            <p id="cdChainNote" class="note"></p>
+          </section>
+        </section>
+
+        <!-- ============================ 微積の発展 ============================ -->
+        <section class="view" data-view="calculusAdv" hidden>
+          <p class="subtitle">
+            微積が何の役に立つのか。<strong>関数を多項式で近似する</strong>、<strong>接線で方程式を解く</strong>、
+            <strong>積分で体積を出す</strong>、そして<strong>e はどこから来たのか</strong>。（数学II・III）
+          </p>
+
+          <section class="panel" aria-labelledby="cvTaylorHeading">
+            <h2 id="cvTaylorHeading">テイラー展開 ── 多項式で関数を作る</h2>
+            <p class="panel-desc">
+              原点での値・傾き・曲がり方…を順に合わせていくと、多項式が本物の関数に貼りついていきます。
+              次数を上げるほど一致する範囲が広がるのを見てください。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-inline">
+                <span>関数</span>
+                <select id="cvTaylor"></select>
+              </label>
+              <label class="field field-grow">
+                <span>次数 = <output id="cvDegreeOut" class="mono">1</output></span>
+                <input id="cvDegree" type="range" min="0" max="17" step="1" value="1" />
+              </label>
+              <button type="button" id="cvTaylorPlay" class="btn btn-primary">次数を上げていく</button>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="cvTaylorCanvas" aria-label="関数とテイラー多項式" role="img"></canvas>
+            </div>
+            <div id="cvTaylorLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">多項式</span>
+                <span id="cvTaylorTerms" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">一致する範囲（誤差 0.01 未満）</span>
+                <span id="cvTaylorError" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">収束半径</span>
+                <span id="cvTaylorRadius" class="stat-value">—</span>
+              </div>
+            </div>
+            <p id="cvTaylorNote" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="cvNewtonHeading">
+            <h2 id="cvNewtonHeading">ニュートン法 ── 接線で方程式を解く</h2>
+            <p class="panel-desc">
+              いまの点で接線を引き、その接線が x軸と交わるところを次の点にする。これを繰り返すだけで、解に猛烈な速さで近づきます。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-inline">
+                <span>方程式</span>
+                <select id="cvNewton"></select>
+              </label>
+              <label class="field field-grow">
+                <span>出発点 x₀ = <output id="cvNewtonX0Out" class="mono">2.000</output></span>
+                <input id="cvNewtonX0" type="range" min="-1" max="3.2" step="0.01" value="2" />
+              </label>
+              <label class="field field-grow">
+                <span>繰り返す回数 = <output id="cvNewtonStepsOut" class="mono">4</output></span>
+                <input id="cvNewtonSteps" type="range" min="1" max="8" step="1" value="4" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="cvNewtonCanvas" aria-label="ニュートン法の反復" role="img"></canvas>
+            </div>
+            <div id="cvNewtonLegend" class="legend"></div>
+
+            <div class="table-wrap">
+              <table class="data-table" id="cvNewtonTable">
+                <thead>
+                  <tr><th>回</th><th>x</th><th>f(x)</th><th>解との誤差</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p id="cvNewtonNote" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="cvRevHeading">
+            <h2 id="cvRevHeading">回転体の体積 ── 断面積を積分する</h2>
+            <p class="panel-desc">
+              曲線を x軸のまわりに回してできる立体を、薄い円盤に切って積み上げます。
+              1枚の体積は <code>π·f(x)²·Δx</code>。足し合わせれば <code>V = ∫π f(x)² dx</code> です。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-inline">
+                <span>回転させる曲線</span>
+                <select id="cvRev"></select>
+              </label>
+              <label class="field field-grow">
+                <span>円盤の枚数 n = <output id="cvRevNOut" class="mono">12</output></span>
+                <input id="cvRevN" type="range" min="2" max="80" step="1" value="12" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="cvRevCanvas" aria-label="回転体を円盤に分割した図" role="img"></canvas>
+            </div>
+            <div id="cvRevLegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">円盤の合計</span>
+                <span id="cvRevSum" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">厳密な体積</span>
+                <span id="cvRevExact" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">ずれ</span>
+                <span id="cvRevErr" class="stat-value">—</span>
+              </div>
+            </div>
+            <p id="cvRevNote" class="note"></p>
+          </section>
+
+          <section class="panel" aria-labelledby="cvEHeading">
+            <h2 id="cvEHeading">e はどこから来たのか</h2>
+            <p class="panel-desc">
+              <code>aˣ</code> の底 a を動かすと、x = 0 での接線の傾きが変わります。
+              <strong>その傾きがちょうど 1 になる a</strong> —— それが e です。天下りの定数ではありません。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>底 a = <output id="cvBaseOut" class="mono">2.0000</output></span>
+                <input id="cvBase" type="range" min="1.2" max="4" step="0.0001" value="2" />
+              </label>
+              <button type="button" id="cvFindE" class="btn">傾きが 1 になる a に合わせる</button>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="cvECanvas" aria-label="aのx乗と原点での接線" role="img"></canvas>
+            </div>
+            <div id="cvELegend" class="legend"></div>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">x = 0 での接線の傾き</span>
+                <span id="cvESlope" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">log a</span>
+                <span id="cvELn" class="stat-value">—</span>
+              </div>
+            </div>
+            <p id="cvENote" class="note"></p>
+
+            <h3 class="sub-heading">もうひとつの定義: (1 + 1/n)ⁿ</h3>
+            <div class="table-wrap">
+              <table class="data-table" id="cvETable">
+                <thead>
+                  <tr><th>n</th><th>(1 + 1/n)ⁿ</th><th>e との差</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </section>
         </section>
 
