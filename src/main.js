@@ -21,6 +21,7 @@ import { initMotionView } from "./views/motion.js";
 import { initLinearView } from "./views/linear.js";
 import { initProbabilityView } from "./views/probability.js";
 import { initPythagorasView } from "./views/pythagoras.js";
+import { initConicView } from "./views/conic.js";
 import { initComplexView } from "./views/complex.js";
 import { initCltView } from "./views/clt.js";
 
@@ -39,6 +40,7 @@ const VIEWS = [
   "calculus",
   "calculusDeep",
   "calculusAdv",
+  "conic",
   "complex",
   "clt",
   "collatz",
@@ -63,6 +65,7 @@ const registry = {
   probability: initProbabilityView(),
   inscribed: initInscribedView(),
   pythagoras: initPythagorasView(),
+  conic: initConicView(),
   complex: initComplexView(),
   clt: initCltView(),
   unitcircle: initUnitCircleView(),
