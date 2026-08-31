@@ -43,6 +43,7 @@
             <button type="button" class="tab" data-view="calculus">微分と積分</button>
             <button type="button" class="tab" data-view="calculusDeep">微分を深める</button>
             <button type="button" class="tab" data-view="calculusAdv">微積の発展</button>
+            <button type="button" class="tab" data-view="conic">円錐を切ると</button>
             <button type="button" class="tab" data-view="complex">複素数平面</button>
             <button type="button" class="tab" data-view="clt">中心極限定理</button>
           </div>
@@ -1515,6 +1516,121 @@
                 </thead>
                 <tbody></tbody>
               </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- =========================== 円錐を切ると =========================== -->
+        <section class="view" data-view="conic" hidden>
+          <p class="subtitle">
+            楕円・放物線・双曲線は、別々の式をもつ3つの曲線として習います。でも本当は
+            <strong>ひとつの円錐を、3通りの角度で切っただけ</strong>。どれになるかを決めているのは、
+            切る平面が<strong>円錐の側面よりゆるいか、ちょうど平行か、急か</strong>だけです。（数学C）
+          </p>
+
+          <section class="panel" aria-labelledby="cnCutHeading">
+            <h2 id="cnCutHeading">円錐を切る</h2>
+            <p class="panel-desc">
+              上下2つに広がる円錐を、平面で切ります。図はドラッグで回せます。
+              傾きを 0 から少しずつ上げていくと、円 → 楕円 → 放物線 → 双曲線 と移り変わります。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="切り方のプリセット">
+              <span class="preset-label">例:</span>
+              <span id="cnPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>切る傾き ψ = <output id="cnPsiOut" class="mono">35°</output></span>
+                <input id="cnPsi" type="range" min="0" max="82" step="1" value="35" />
+              </label>
+              <label class="field field-grow">
+                <span>円錐の半頂角 α = <output id="cnAlphaOut" class="mono">30°</output></span>
+                <input id="cnAlpha" type="range" min="15" max="55" step="1" value="30" />
+              </label>
+            </div>
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>切る高さ = <output id="cnHeightOut" class="mono">1.00</output></span>
+                <input id="cnHeight" type="range" min="0.4" max="1.6" step="0.02" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>向き = <output id="cnSpinOut" class="mono">35°</output></span>
+                <input id="cnSpin" type="range" min="0" max="360" step="1" value="35" />
+              </label>
+              <button type="button" id="cnSweep" class="btn btn-primary">傾きを 0° から上げる</button>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <label class="field field-inline checkbox-field">
+                <input id="cnShowPlane" type="checkbox" checked />
+                <span>切る平面を描く</span>
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="cnShowGen" type="checkbox" checked />
+                <span>側面の線（母線）を描く</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="cnCone" aria-label="円錐と切り口" role="img"></canvas>
+            </div>
+
+            <p id="cnNote" class="note"></p>
+            <p id="cnRule" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">切り口</span>
+                <span id="cnKind" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">側面の傾き（境目）</span>
+                <span id="cnCrit" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">離心率 e</span>
+                <span id="cnEcc" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="cnFaceHeading">
+            <h2 id="cnFaceHeading">切り口を正面から見ると</h2>
+            <p class="panel-desc">
+              同じ切り口を、切った平面の真上から見た<strong>本当の形</strong>です。
+              曲線の上の点 P を動かすと、<strong>2つの焦点までの距離の和（双曲線なら差）が変わらない</strong>ことが確かめられます。
+              教科書で別々に習う「焦点の定義」と「円錐の切り口」が、ここで同じものになります。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>点 P の位置 = <output id="cnPOut" class="mono">0%</output></span>
+                <input id="cnP" type="range" min="0" max="1" step="0.002" value="0.15" />
+              </label>
+              <button type="button" id="cnPPlay" class="btn btn-primary">P を動かす</button>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="cnFace" aria-label="切り口の本当の形と焦点" role="img"></canvas>
+            </div>
+
+            <p id="cnFaceNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label" id="cnMeasureLabel">距離の和</span>
+                <span id="cnMeasure" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">一定であるはずの値</span>
+                <span id="cnConst" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">ずれ</span>
+                <span id="cnGap" class="stat-value stat-value-sm">—</span>
+              </div>
             </div>
           </section>
         </section>
