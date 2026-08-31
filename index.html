@@ -28,6 +28,7 @@
             <button type="button" class="tab" data-view="circlearea">円の面積</button>
             <button type="button" class="tab" data-view="net">展開図と立体</button>
             <button type="button" class="tab" data-view="section">立体切断</button>
+            <button type="button" class="tab" data-view="motion">動きとグラフ</button>
           </div>
           <div class="tab-group">
             <span class="tab-group-label">中学校</span>
@@ -504,6 +505,121 @@
                 <span class="stat-label">実際に切った体積</span>
                 <span id="scPrismActual" class="stat-value stat-value-sm">—</span>
               </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- =========================== 動きとグラフ =========================== -->
+        <section class="view" data-view="motion" hidden>
+          <p class="subtitle">
+            答えが数ではなく<strong>グラフの形</strong>で問われるタイプ。
+            どこで折れるのか、どこが直線でどこが曲線なのか——紙の上では
+            <strong>図が止まっている</strong>のが最大の難所です。動かしながら、
+            グラフが自分で描かれていくのを見てください。（中学受験）
+          </p>
+
+          <section class="panel" aria-labelledby="moOvHeading">
+            <h2 id="moOvHeading">重なりの面積</h2>
+            <p class="panel-desc">
+              動く図形が毎秒 1cm で右へ進みます。下のグラフは<strong>いまの時刻まで</strong>を描いたもの。
+              折れ点では、図のほうで<strong>どの頂点がどの辺を越えたか</strong>を見てください。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="図形の組み合わせ">
+              <span class="preset-label">図形:</span>
+              <span id="moOvPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>時刻 = <output id="moTOut" class="mono">0.0</output> 秒</span>
+                <input id="moT" type="range" min="0" max="10" step="0.01" value="0" />
+              </label>
+              <button type="button" id="moPlay" class="btn btn-primary">動かす</button>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="折れ点へ移動">
+              <span class="preset-label">折れ点へ:</span>
+              <span id="moBreaks" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="moOverlap" aria-label="重なりの面積と、そのグラフ" role="img"></canvas>
+            </div>
+
+            <p id="moOvNote" class="note"></p>
+            <p id="moOvSegs" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">いまの重なり</span>
+                <span id="moArea" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">最大の重なり</span>
+                <span id="moPeak" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">グラフの折れ点</span>
+                <span id="moBreakCount" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="moTankHeading">
+            <h2 id="moTankHeading">水そうグラフ</h2>
+            <p class="panel-desc">
+              仕切りのある水そうに、一定の割合で水を入れます。グラフは
+              <strong>水を入れているへや（いちばん左）の水面の高さ</strong>。
+              のぼる・止まる・またのぼる、の理由を水そうのほうで確かめてください。
+            </p>
+
+            <div class="preset-row" role="group" aria-label="水そうの形">
+              <span class="preset-label">水そう:</span>
+              <span id="moTankPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>時刻 = <output id="moTankTOut" class="mono">0</output> 秒</span>
+                <input id="moTankT" type="range" min="0" max="100" step="0.1" value="0" />
+              </label>
+              <button type="button" id="moTankPlay" class="btn btn-primary">水を入れる</button>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="折れ点へ移動">
+              <span class="preset-label">折れ点へ:</span>
+              <span id="moTankBreaks" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap upright">
+              <canvas id="moTank" aria-label="水そうと水面の高さのグラフ" role="img"></canvas>
+            </div>
+
+            <p id="moTankNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">左の水面</span>
+                <span id="moTankLevel" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">入れた水</span>
+                <span id="moTankVol" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">満水まで</span>
+                <span id="moTankFull" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table" id="moTankTable">
+                <thead>
+                  <tr><th>区間</th><th>左の水面</th><th>1秒あたり</th><th>そのあいだ何が起きているか</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
             </div>
           </section>
         </section>

@@ -17,6 +17,7 @@ import { initRateView } from "./views/rate.js";
 import { initCircleAreaView } from "./views/circlearea.js";
 import { initNetView } from "./views/net.js";
 import { initSectionView } from "./views/section.js";
+import { initMotionView } from "./views/motion.js";
 import { initLinearView } from "./views/linear.js";
 import { initProbabilityView } from "./views/probability.js";
 import { initPythagorasView } from "./views/pythagoras.js";
@@ -29,6 +30,7 @@ const VIEWS = [
   "circlearea",
   "net",
   "section",
+  "motion",
   "linear",
   "probability",
   "inscribed",
@@ -56,6 +58,7 @@ const registry = {
   circlearea: initCircleAreaView(),
   net: initNetView(),
   section: initSectionView(),
+  motion: initMotionView(),
   linear: initLinearView(),
   probability: initProbabilityView(),
   inscribed: initInscribedView(),
