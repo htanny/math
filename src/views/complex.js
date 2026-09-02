@@ -16,6 +16,7 @@ export function initComplexView() {
   const unitW = $("cxUnitW");
   const spinBtn = $("cxSpin");
   const resetBtn = $("cxReset");
+  const activeSel = $("cxActive");
   const note = $("cxNote");
   const tableBody = $("cxTable").querySelector("tbody");
 
@@ -129,6 +130,18 @@ export function initComplexView() {
     arrow(ctx, g, z, vars["--series-1"], "z", vars);
     arrow(ctx, g, w, vars["--series-2"], "w", vars);
     arrow(ctx, g, zw, vars["--series-3"], "zw", vars);
+
+    // show which arrow the keys are holding, but only while focused
+    if (document.activeElement === canvas) {
+      const k = activeSel.value === "w" ? w : z;
+      ctx.strokeStyle = vars["--text-secondary"];
+      ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(g.sx(k.re), g.sy(k.im), 14, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   }
 
   function renderProduct() {
@@ -179,6 +192,7 @@ export function initComplexView() {
     const dw = near(w);
     if (Math.min(dz, dw) > 26) return;
     dragging = dz <= dw ? "z" : "w";
+    activeSel.value = dragging;
     canvas.setPointerCapture(evt.pointerId);
     evt.preventDefault();
   });
@@ -204,6 +218,33 @@ export function initComplexView() {
   }
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
+
+  /* ------------------------------------------------------------ keyboard -- */
+
+  const KEY_DELTA = {
+    ArrowRight: [1, 0],
+    ArrowLeft: [-1, 0],
+    ArrowUp: [0, 1],
+    ArrowDown: [0, -1],
+  };
+
+  canvas.addEventListener("keydown", (evt) => {
+    const d = KEY_DELTA[evt.key];
+    if (!d) return;
+    evt.preventDefault();
+    stopSpin();
+    const s = evt.shiftKey ? 0.02 : 0.1;
+    const clamp = (x) => Math.max(-RANGE, Math.min(RANGE, x));
+    const target = activeSel.value === "w" ? w : z;
+    const moved = { re: clamp(target.re + d[0] * s), im: clamp(target.im + d[1] * s) };
+    if (activeSel.value === "w") w = moved;
+    else z = moved;
+    renderProduct();
+  });
+
+  canvas.addEventListener("focus", drawProduct);
+  canvas.addEventListener("blur", drawProduct);
+  activeSel.addEventListener("change", drawProduct);
 
   unitW.addEventListener("change", renderProduct);
   resetBtn.addEventListener("click", () => {

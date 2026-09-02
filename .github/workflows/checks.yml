@@ -1,0 +1,22 @@
+name: Checks
+
+# deploy.yml only runs on main, so on its own a pull request never gets
+# checked. This runs the same verification on every branch and PR.
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build

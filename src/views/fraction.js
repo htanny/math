@@ -5,6 +5,15 @@ const $ = (id) => document.getElementById(id);
 const LABEL_FONT = "12px system-ui, -apple-system, 'Segoe UI', sans-serif";
 const SMALL_FONT = "11px system-ui, -apple-system, 'Segoe UI', sans-serif";
 
+/** [min, max, fallback] for each box, and the label the warning uses. */
+const LIMITS = { a: [1, 24, 2], b: [1, 24, 3], c: [1, 24, 1], d: [1, 24, 4] };
+const BOX_NAME = {
+  a: "わられる数の分子",
+  b: "わられる数の分母",
+  c: "わる数の分子",
+  d: "わる数の分母",
+};
+
 const PRESETS = [
   { label: "2/3 ÷ 1/4", v: [2, 3, 1, 4] },
   { label: "3/4 ÷ 2/5", v: [3, 4, 2, 5] },
@@ -21,21 +30,42 @@ export function initFractionView() {
   const note = $("frNote");
   const steps = $("frSteps");
   const whyNote = $("frWhyNote");
+  const warn = $("frWarn");
   const statAnswer = $("frAnswer");
   const statMixed = $("frMixed");
   const statCount = $("frCount");
 
+  // The boxes are not inside a <form>, so min/max block nothing on their own.
+  // Anything unusable falls back to a default — and `bad` records that, so the
+  // picture is never allowed to disagree with what the boxes show.
   function read() {
-    const clamp = (el, lo, hi, dflt) => {
-      const v = Math.round(Number(el.value));
-      return Number.isFinite(v) && v >= lo && v <= hi ? v : dflt;
-    };
-    return {
-      a: clamp(inputs.a, 1, 24, 2),
-      b: clamp(inputs.b, 1, 24, 3),
-      c: clamp(inputs.c, 1, 24, 1),
-      d: clamp(inputs.d, 1, 24, 4),
-    };
+    const out = { bad: [] };
+    for (const key of ["a", "b", "c", "d"]) {
+      const [lo, hi, dflt] = LIMITS[key];
+      const raw = inputs[key].value.trim();
+      const v = Math.round(Number(raw));
+      const ok = raw !== "" && Number.isFinite(v) && v >= lo && v <= hi;
+      out[key] = ok ? v : dflt;
+      if (!ok) out.bad.push({ key, raw, used: dflt });
+    }
+    return out;
+  }
+
+  function warnText(bad) {
+    return bad
+      .map(({ key, raw, used }) => {
+        const [lo, hi] = LIMITS[key];
+        const what = raw === "" ? "空欄です" : `「${raw}」は使えません`;
+        return `${BOX_NAME[key]}: ${what}（${lo}〜${hi} の整数）。${used} として描いています。`;
+      })
+      .join(" ");
+  }
+
+  // Fires on blur / Enter, so it does not fight you mid-keystroke.
+  function snapInputs() {
+    const v = read();
+    for (const key of ["a", "b", "c", "d"]) inputs[key].value = String(v[key]);
+    render();
   }
 
   /** One row of the picture: a bar from 0 to `value`, ticked every `step`. */
@@ -240,6 +270,9 @@ export function initFractionView() {
           `残りを ${v.b} 分の何個と数えないことに注意してください — 数えているのはタイルです。`
         : `${dv} の中に ${ds} はちょうど ${t.whole} 個入ります。だから ${dv} ÷ ${ds} = ${fStr(t.quotient)}。`;
 
+    warn.hidden = v.bad.length === 0;
+    warn.textContent = v.bad.length ? warnText(v.bad) : "";
+
     steps.innerHTML = stepHTML(v, t);
     whyNote.textContent =
       `${fStr(frac(v.c, v.d))} の逆数は ${fStr(t.perUnit)}。「1 の中にいくつ入るか」がそのまま逆数になっているので、` +
@@ -249,7 +282,7 @@ export function initFractionView() {
 
   for (const el of Object.values(inputs)) {
     el.addEventListener("input", render);
-    el.addEventListener("change", render);
+    el.addEventListener("change", snapInputs);
   }
 
   const presetHost = $("frPresets");
