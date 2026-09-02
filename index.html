@@ -103,6 +103,8 @@
               <span id="frPresets" class="preset-chips"></span>
             </div>
 
+            <p id="frWarn" class="note note-warn" role="status" aria-live="polite" hidden></p>
+
             <div class="chart-wrap short">
               <canvas id="frCanvas" aria-label="分数の割り算の面積図" role="img"></canvas>
             </div>
@@ -862,7 +864,8 @@
           <section class="panel" aria-labelledby="icHeading">
             <h2 id="icHeading">点をドラッグしてみる</h2>
             <p class="panel-desc">
-              A・B・P はすべて円周上をドラッグできます。P を大きく動かしても円周角が動かないことを確かめてください。
+              A・B・P はすべて円周上を動かせます（ドラッグ、または矢印キー）。
+              P を大きく動かしても円周角が動かないことを確かめてください。
             </p>
 
             <div class="controls-row secondary-row">
@@ -878,8 +881,30 @@
               <button type="button" id="icReset" class="btn btn-ghost">最初の配置に戻す</button>
             </div>
 
+            <div class="controls-row secondary-row">
+              <label class="field field-inline" for="icActive">
+                <span>キーボードで動かす点</span>
+                <select id="icActive">
+                  <option value="p" selected>P（円周角の頂点）</option>
+                  <option value="a">A</option>
+                  <option value="b">B</option>
+                  <option value="q">Q（反対側の弧）</option>
+                </select>
+              </label>
+              <p id="icKeys" class="note note-inline">
+                図をクリックするか Tab でフォーカスし、← → で 2°、Shift + ← → で 0.5°、
+                PageUp / PageDown で 15° 動かせます。
+              </p>
+            </div>
+
             <div class="chart-wrap square">
-              <canvas id="icCanvas" aria-label="円周角と中心角の作図" role="img"></canvas>
+              <canvas
+                id="icCanvas"
+                tabindex="0"
+                role="application"
+                aria-label="円周角と中心角の作図。矢印キーで選んだ点を円周上で動かせます。"
+                aria-describedby="icKeys"
+              ></canvas>
             </div>
 
             <p id="icNote" class="note"></p>
@@ -1646,7 +1671,7 @@
           <section class="panel" aria-labelledby="cxHeading">
             <h2 id="cxHeading">z と w をドラッグする</h2>
             <p class="panel-desc">
-              青い点 z と橙の点 w を動かしてください。緑の点が積 zw です。
+              青い点 z と橙の点 w を動かしてください（ドラッグ、または矢印キー）。緑の点が積 zw です。
               w を単位円の上に置くと、zw は<strong>長さを変えずに回るだけ</strong>になります。
             </p>
 
@@ -1659,8 +1684,28 @@
               <button type="button" id="cxReset" class="btn btn-ghost">最初に戻す</button>
             </div>
 
+            <div class="controls-row secondary-row">
+              <label class="field field-inline" for="cxActive">
+                <span>キーボードで動かす点</span>
+                <select id="cxActive">
+                  <option value="z" selected>z（青）</option>
+                  <option value="w">w（橙）</option>
+                </select>
+              </label>
+              <p id="cxKeys" class="note note-inline">
+                図をクリックするか Tab でフォーカスし、矢印キーで 0.1 ずつ、
+                Shift + 矢印キーで 0.02 ずつ動かせます。
+              </p>
+            </div>
+
             <div class="chart-wrap square">
-              <canvas id="cxCanvas" aria-label="複素数平面上の z, w, zw" role="img"></canvas>
+              <canvas
+                id="cxCanvas"
+                tabindex="0"
+                role="application"
+                aria-label="複素数平面上の z, w, zw。矢印キーで選んだ点を動かせます。"
+                aria-describedby="cxKeys"
+              ></canvas>
             </div>
 
             <p id="cxNote" class="note"></p>

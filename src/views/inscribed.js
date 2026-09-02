@@ -25,6 +25,7 @@ export function initInscribedView() {
   const quadToggle = $("icQuad");
   const diameterBtn = $("icDiameter");
   const resetBtn = $("icReset");
+  const activeSel = $("icActive");
   const statInscribed = $("icInscribed");
   const statCentral = $("icCentral");
   const statRatio = $("icRatio");
@@ -154,6 +155,19 @@ export function initInscribedView() {
     dot(P, vars["--series-1"], "P");
     if (quadToggle.checked) dot(Q, vars["--series-3"], "Q");
 
+    // show which point the arrow keys are holding, but only while focused —
+    // otherwise it reads as a fourth kind of marker
+    if (document.activeElement === canvas) {
+      const K = pointAt(ang[activeKey()]);
+      ctx.strokeStyle = vars["--series-4"];
+      ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(K.x, K.y, 13, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     updateStats(A, B, P, Q, O);
   }
 
@@ -178,8 +192,15 @@ export function initInscribedView() {
       statNote.textContent = "AB が直径なので円周角は 90°（タレスの定理）。直径を見込む角はつねに直角です。";
     } else {
       statNote.textContent =
-        "P を円周上でドラッグしても ∠APB は変わりません。中心角 ∠AOB はつねにその 2 倍です。A・B も動かせます。";
+        "P を円周上で動かしても ∠APB は変わりません。中心角 ∠AOB はつねにその 2 倍です。" +
+        "A・B も動かせます（ドラッグ、または図をフォーカスして矢印キー）。";
     }
+  }
+
+  /** Which point the arrow keys move. Q only counts while it is on screen. */
+  function activeKey() {
+    const k = activeSel.value;
+    return k === "q" && !quadToggle.checked ? "p" : k;
   }
 
   /* ------------------------------------------------------------ dragging -- */
@@ -211,6 +232,7 @@ export function initInscribedView() {
     const handle = nearestHandle(pos);
     if (!handle) return;
     dragging = handle;
+    activeSel.value = handle;
     canvas.setPointerCapture(evt.pointerId);
     evt.preventDefault();
   });
@@ -237,13 +259,41 @@ export function initInscribedView() {
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
 
+  /* ------------------------------------------------------------ keyboard -- */
+
+  const KEY_STEP = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
+
+  canvas.addEventListener("keydown", (evt) => {
+    let deg = 0;
+    if (evt.key in KEY_STEP) deg = KEY_STEP[evt.key] * (evt.shiftKey ? 0.5 : 2);
+    else if (evt.key === "PageUp") deg = 15;
+    else if (evt.key === "PageDown") deg = -15;
+    else return;
+    evt.preventDefault();
+
+    const key = activeKey();
+    if (key === "p" && traceToggle.checked) {
+      ghosts.push(ang.p);
+      if (ghosts.length > 14) ghosts.shift();
+    }
+    ang[key] += (deg * Math.PI) / 180;
+    draw();
+  });
+
+  canvas.addEventListener("focus", draw);
+  canvas.addEventListener("blur", draw);
+  activeSel.addEventListener("change", draw);
+
   /* ----------------------------------------------------------- controls -- */
 
   traceToggle.addEventListener("change", () => {
     ghosts.length = 0;
     draw();
   });
-  quadToggle.addEventListener("change", draw);
+  quadToggle.addEventListener("change", () => {
+    if (!quadToggle.checked && activeSel.value === "q") activeSel.value = "p";
+    draw();
+  });
 
   diameterBtn.addEventListener("click", () => {
     // put B diametrically opposite A, keeping P clear of both
