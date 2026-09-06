@@ -27,6 +27,16 @@ for (const spec of OVERLAP_CASES) {
   check("はじめの重なり", areaAt(spec, 0), 0);
   check("おわりの重なり", areaAt(spec, span), 0);
 
+  // both figures must stand on the same ground line: the moving figure only
+  // slides sideways, so a difference in height is invisible in the numbers and
+  // misleading in the picture
+  const bottom = (fig) => Math.min(...fig.outline.map(([, y]) => y));
+  check("2つの図形の底辺がそろっている", bottom(spec.moving) - bottom(spec.fixed), 0);
+  for (const pieces of [spec.fixed.pieces, spec.moving.pieces]) {
+    const low = Math.min(...pieces.flat().map(([, y]) => y));
+    check("  分割した凸部分も同じ底辺", low - bottom(spec.fixed), 0);
+  }
+
   const movingArea = spec.moving.pieces.reduce((s, p) => s + polyArea2(p), 0);
   let peak = 0;
   for (let i = 0; i <= 2000; i++) peak = Math.max(peak, areaAt(spec, (span * i) / 2000));

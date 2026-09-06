@@ -65,12 +65,20 @@ export function overlapArea(fixedPieces, movingPieces, dx) {
 
 const rect = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
 
+/**
+ * Every figure sits on y = 0. The moving figure slides horizontally, so its
+ * height above the ground never affects the shared area — but a figure
+ * floating half a centimetre higher than the other reads as though it might,
+ * and the picture is the whole point here. Sharing one baseline makes the
+ * overlap something you can see rather than infer.
+ * `scripts/verify-motion.mjs` holds the presets to it.
+ */
 export const OVERLAP_CASES = [
   {
     key: "sq-sq",
     label: "正方形 × 小さい正方形",
     fixed: { pieces: [rect(0, 0, 6, 6)], outline: rect(0, 0, 6, 6), label: "1辺 6cm" },
-    moving: { pieces: [rect(0, 1, 4, 4)], outline: rect(0, 1, 4, 4), label: "1辺 4cm" },
+    moving: { pieces: [rect(0, 0, 4, 4)], outline: rect(0, 0, 4, 4), label: "1辺 4cm" },
     from: -4,
     to: 6,
     note:
@@ -93,8 +101,8 @@ export const OVERLAP_CASES = [
     label: "正方形 × 直角三角形",
     fixed: { pieces: [rect(0, 0, 6, 6)], outline: rect(0, 0, 6, 6), label: "1辺 6cm" },
     moving: {
-      pieces: [[[0, 1], [4, 1], [4, 5]]],
-      outline: [[0, 1], [4, 1], [4, 5]],
+      pieces: [[[0, 0], [4, 0], [4, 4]]],
+      outline: [[0, 0], [4, 0], [4, 4]],
       label: "直角をはさむ辺 4cm",
     },
     from: -4,
