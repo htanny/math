@@ -58,6 +58,7 @@
             <span class="tab-group-label">中学校</span>
             <button type="button" class="tab" data-view="linear">一次関数と連立方程式</button>
             <button type="button" class="tab" data-view="quadratic">二次関数 y=ax²</button>
+            <button type="button" class="tab" data-view="similar">相似と面積比・体積比</button>
             <button type="button" class="tab" data-view="probability">確率と大数の法則</button>
             <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
             <button type="button" class="tab" data-view="pythagoras">三平方の定理</button>
@@ -857,6 +858,132 @@
 
             <h3 class="sub-heading">解いてみる</h3>
             <ul id="qdSolveSteps" class="steps"></ul>
+          </section>
+        </section>
+
+        <!-- ===================== 相似と面積比・体積比 ===================== -->
+        <section class="view" data-view="similar" hidden>
+          <p class="subtitle">
+            「長さが 2 倍だから面積も 2 倍」——
+            小6から中3まで、いちばん多い誤答です。公式を覚え直しても直りません。
+            効くのは <strong>大きいほうが小さいほうの何個ぶんでできているか</strong> を
+            実際に見ること。数えると、面積は <code>k²</code> 個、体積は <code>k³</code> 個に
+            きっかりなります。（小6〜中3）
+          </p>
+
+          <section class="panel" aria-labelledby="smPlaneHeading">
+            <h2 id="smPlaneHeading">平面: 長さ k 倍 → 面積 k² 倍</h2>
+            <p class="panel-desc">
+              もとの図形を k 倍に拡大し、その中をもとの図形と<strong>合同な</strong>ピースで
+              敷き詰めます。ピースの数を数えてみてください。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <span class="preset-label">図形:</span>
+              <span id="smFigures" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>相似比 1 : <output id="smKOut" class="mono">2</output></span>
+                <input id="smK" type="range" min="1" max="6" step="1" value="2" />
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="smCount" type="checkbox" checked />
+                <span>ピースに番号をふる</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="smPlaneCanvas" aria-label="もとの図形と、それを k 倍に拡大して合同なピースで敷き詰めた図形" role="img"></canvas>
+            </div>
+
+            <p id="smPlaneNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">相似比（長さの比）</span>
+                <span id="smRatioLen" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">面積比</span>
+                <span id="smRatioArea" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">敷き詰めたピースの数</span>
+                <span id="smPieces" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">入試の鉄則</h3>
+            <ul id="smPlaneSteps" class="steps"></ul>
+          </section>
+
+          <section class="panel" aria-labelledby="smSolidHeading">
+            <h2 id="smSolidHeading">立体: 長さ k 倍 → 表面積 k² 倍・体積 k³ 倍</h2>
+            <p class="panel-desc">
+              同じことを立体で。k 倍に拡大した立体は、もとの立体
+              <strong>k³ 個</strong>でできています。ドラッグで回せます。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <span class="preset-label">立体:</span>
+              <span id="smBoxes" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>相似比 1 : <output id="smK3Out" class="mono">3</output></span>
+                <input id="smK3" type="range" min="1" max="5" step="1" value="3" />
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="smExplode" type="checkbox" />
+                <span>ばらして見る</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas
+                id="smSolidCanvas"
+                tabindex="0"
+                role="application"
+                aria-label="k 倍に拡大した立体を、もとの立体 k³ 個で組み上げた図。矢印キーで回せます。"
+                aria-describedby="smSolidKeys"
+              ></canvas>
+            </div>
+            <p id="smSolidKeys" class="note note-inline">
+              ドラッグ、または図をフォーカスして矢印キーで回せます。
+            </p>
+
+            <p id="smSolidNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">表面積比</span>
+                <span id="smRatioSurf" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">体積比</span>
+                <span id="smRatioVol" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">積み上げた個数</span>
+                <span id="smCubes" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">箱だけの話ではありません</h3>
+            <p class="note-inline">
+              どの立体でも、それぞれの公式から計算すると同じ比になります。
+            </p>
+            <div class="table-wrap">
+              <table id="smSolidTable" class="data-table">
+                <thead>
+                  <tr><th>立体</th><th>もとの体積</th><th>k 倍の体積</th><th>体積比</th><th>表面積比</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </section>
         </section>
 

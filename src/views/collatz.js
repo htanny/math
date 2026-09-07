@@ -40,6 +40,8 @@ export function initCollatzView() {
   let animIndex = 0;
   let animHandle = null;
   let paused = false;
+  /** Set while a run is in flight, so pausing can drop the loop and restart it. */
+  let resumeAnim = null;
   let done = false;
   let pinned = [];
   let records = [];
@@ -104,6 +106,7 @@ export function initCollatzView() {
   function finishAnimation() {
     cancelAnimation();
     done = true;
+    paused = false;
     animIndex = current.sequence.length - 1;
     renderFrame();
     statSteps.textContent = fmt(current.steps);
@@ -119,6 +122,7 @@ export function initCollatzView() {
   function cancelAnimation() {
     if (animHandle) cancelAnimationFrame(animHandle);
     animHandle = null;
+    resumeAnim = null;
   }
 
   function startAnimation(result) {
@@ -141,10 +145,6 @@ export function initCollatzView() {
 
     let lastTime = performance.now();
     const step = (now) => {
-      if (paused) {
-        animHandle = requestAnimationFrame(step);
-        return;
-      }
       if (now - lastTime >= speed) {
         lastTime = now;
         animIndex++;
@@ -154,6 +154,13 @@ export function initCollatzView() {
         }
         renderFrame();
       }
+      animHandle = requestAnimationFrame(step);
+    };
+    // Pausing drops the loop entirely rather than spinning on a `paused` flag:
+    // a paused run used to keep waking the browser 60 times a second to do
+    // nothing.
+    resumeAnim = () => {
+      lastTime = performance.now();
       animHandle = requestAnimationFrame(step);
     };
     renderFrame();
@@ -188,6 +195,12 @@ export function initCollatzView() {
   pauseBtn.addEventListener("click", () => {
     paused = !paused;
     pauseBtn.textContent = paused ? "再開" : "一時停止";
+    if (!paused) {
+      if (resumeAnim) resumeAnim();
+      return;
+    }
+    if (animHandle) cancelAnimationFrame(animHandle);
+    animHandle = null;
   });
 
   compareBtn.addEventListener("click", () => {
@@ -237,7 +250,7 @@ export function initCollatzView() {
     },
     hide() {
       // Finish rather than freeze: coming back to a half-drawn run reads as a bug.
-      if (animHandle && current) finishAnimation();
+      if ((animHandle || paused) && current) finishAnimation();
     },
     redraw() {
       if (current) renderFrame();

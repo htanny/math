@@ -20,6 +20,7 @@ import { initSectionView } from "./views/section.js";
 import { initMotionView } from "./views/motion.js";
 import { initLinearView } from "./views/linear.js";
 import { initQuadraticView } from "./views/quadratic.js";
+import { initSimilarView } from "./views/similar.js";
 import { initProbabilityView } from "./views/probability.js";
 import { initPythagorasView } from "./views/pythagoras.js";
 import { initConicView } from "./views/conic.js";
@@ -35,6 +36,7 @@ const VIEWS = [
   "motion",
   "linear",
   "quadratic",
+  "similar",
   "probability",
   "inscribed",
   "pythagoras",
@@ -65,6 +67,7 @@ const registry = {
   motion: initMotionView(),
   linear: initLinearView(),
   quadratic: initQuadraticView(),
+  similar: initSimilarView(),
   probability: initProbabilityView(),
   inscribed: initInscribedView(),
   pythagoras: initPythagorasView(),
