@@ -20,7 +20,31 @@
             <span id="themeIcon">🌙</span>
           </button>
         </div>
-        <nav class="tabs" aria-label="テーマ切替">
+        <button
+          id="navToggle"
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="tabNav"
+        >
+          <span class="nav-toggle-label">テーマ</span>
+          <span id="navCurrent" class="nav-toggle-current">分数の割り算</span>
+          <span class="nav-toggle-caret" aria-hidden="true">▾</span>
+        </button>
+
+        <nav id="tabNav" class="tabs" aria-label="テーマ切替">
+          <div class="tab-filter">
+            <input
+              id="tabSearch"
+              type="search"
+              placeholder="テーマをしぼりこむ"
+              aria-label="テーマをしぼりこむ"
+              autocomplete="off"
+            />
+            <p id="tabSearchEmpty" class="tab-filter-empty" role="status" hidden>
+              あてはまるテーマがありません
+            </p>
+          </div>
           <div class="tab-group">
             <span class="tab-group-label">小学校</span>
             <button type="button" class="tab" data-view="fraction">分数の割り算</button>
@@ -33,6 +57,7 @@
           <div class="tab-group">
             <span class="tab-group-label">中学校</span>
             <button type="button" class="tab" data-view="linear">一次関数と連立方程式</button>
+            <button type="button" class="tab" data-view="quadratic">二次関数 y=ax²</button>
             <button type="button" class="tab" data-view="probability">確率と大数の法則</button>
             <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
             <button type="button" class="tab" data-view="pythagoras">三平方の定理</button>
@@ -716,6 +741,125 @@
         </section>
 
         <!-- ======================== 確率と大数の法則 ======================== -->
+        <!-- ========================== 二次関数 y=ax² ========================== -->
+        <section class="view" data-view="quadratic" hidden>
+          <p class="subtitle">
+            一次関数の変化の割合は、どこで測っても同じ 1 つの数でした。
+            <strong>y = ax² はそうではありません。</strong>
+            測る場所によって変わる —— 止まった図では伝わらないこの一点が、
+            <code>変化の割合 = a(p + q)</code> の正体です。（中3）
+          </p>
+
+          <section class="panel" aria-labelledby="qdRateHeading">
+            <h2 id="qdRateHeading">変化の割合は、どこで測るかで変わる</h2>
+            <p class="panel-desc">
+              放物線の上の 2 点 P・Q を動かしてください。2 点を結ぶ直線の傾きが変化の割合です。
+              同じ幅だけ動かしても、右へ行くほど急になります。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>a = <output id="qdAOut" class="mono">1</output></span>
+                <input id="qdA" type="range" min="0" max="11" step="1" value="9" aria-label="a の値" />
+              </label>
+              <label class="field field-grow">
+                <span>p = <output id="qdPOut" class="mono">1.0</output></span>
+                <input id="qdP" type="range" min="-4" max="4" step="0.1" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>q = <output id="qdQOut" class="mono">3.0</output></span>
+                <input id="qdQ" type="range" min="-4" max="4" step="0.1" value="3" />
+              </label>
+            </div>
+
+            <div class="controls-row secondary-row">
+              <button type="button" id="qdSlide" class="btn btn-primary">同じ幅のまま右へ動かす</button>
+              <button type="button" id="qdShrink" class="btn">Q を P に近づける</button>
+              <label class="field field-inline checkbox-field">
+                <input id="qdTrail" type="checkbox" checked />
+                <span>測った傾きを残す</span>
+              </label>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="qdRateCanvas" aria-label="y=ax² のグラフと、2点を結ぶ直線" role="img"></canvas>
+            </div>
+
+            <p id="qdRateNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">定義どおり (f(q)−f(p))÷(q−p)</span>
+                <span id="qdRateDef" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">近道 a(p+q)</span>
+                <span id="qdRateShort" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">P と Q</span>
+                <span id="qdPoints" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">入試の鉄則</h3>
+            <ul id="qdRateSteps" class="steps"></ul>
+          </section>
+
+          <section class="panel" aria-labelledby="qdLineHeading">
+            <h2 id="qdLineHeading">放物線と直線の交点＝二次方程式の解</h2>
+            <p class="panel-desc">
+              直線を動かすと交点が動きます。その x 座標は、
+              <code>ax² = mx + n</code> を解いた答えそのものです。
+              交わる・接する・交わらないは、解が 2 個・1 個・0 個であることの図での言い方です。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>a = <output id="qdA2Out" class="mono">1</output></span>
+                <input id="qdA2" type="range" min="0" max="11" step="1" value="9" aria-label="放物線の a" />
+              </label>
+              <label class="field field-grow">
+                <span>傾き m = <output id="qdMOut" class="mono">1.0</output></span>
+                <input id="qdM" type="range" min="-4" max="4" step="0.1" value="1" />
+              </label>
+              <label class="field field-grow">
+                <span>切片 n = <output id="qdNOut" class="mono">2.0</output></span>
+                <input id="qdN" type="range" min="-6" max="6" step="0.1" value="2" />
+              </label>
+            </div>
+
+            <div class="preset-row" role="group" aria-label="交わりかたのプリセット">
+              <span class="preset-label">ためす:</span>
+              <span id="qdPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="qdLineCanvas" aria-label="放物線と直線の交点、および三角形 OAB" role="img"></canvas>
+            </div>
+
+            <p id="qdLineNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">解の個数（D の符号）</span>
+                <span id="qdCount" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">交点の x 座標</span>
+                <span id="qdRoots" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">△OAB の面積</span>
+                <span id="qdArea" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">解いてみる</h3>
+            <ul id="qdSolveSteps" class="steps"></ul>
+          </section>
+        </section>
+
         <section class="view" data-view="probability" hidden>
           <p class="subtitle">
             「確率 1/6」は、1回や6回では何も言っていません。回数を増やすと<strong>相対度数</strong>が 1/6 に近づく——

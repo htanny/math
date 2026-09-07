@@ -110,6 +110,46 @@ h1 {
   color: var(--text-primary);
 }
 
+/* On a phone the full tab list is taller than the screen, so the whole of the
+   first panel starts below the fold. There it collapses behind this button and
+   opens as a sheet; from 640px up the button is gone and the tabs show as
+   before. */
+.nav-toggle {
+  display: none;
+  width: 100%;
+  margin-top: 14px;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nav-toggle-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.nav-toggle-current {
+  flex: 1;
+  font-weight: 600;
+}
+
+.nav-toggle-caret {
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle-caret {
+  transform: rotate(180deg);
+}
+
 .tabs {
   display: flex;
   flex-direction: column;
@@ -117,6 +157,35 @@ h1 {
   margin-top: 16px;
   border-bottom: 1px solid var(--border);
 }
+
+/* 25 themes is more than anyone scans, so the list is filterable at any width. */
+.tab-filter {
+  padding: 0 0 8px;
+}
+
+.tab-filter input {
+  width: 100%;
+  max-width: 260px;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+}
+
+.tab-filter-empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tab[hidden],
+.tab-group[hidden] {
+  display: none;
+}
+
 
 /* Eleven tabs in one row is unreadable, so they sit in labelled groups.
    The label is taken out of the flow so a group that wraps keeps its
@@ -725,6 +794,47 @@ input[type="range"] {
   line-height: 1.6;
 }
 
+@media (max-width: 640px) {
+  .nav-toggle {
+    display: flex;
+  }
+  .tabs {
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-1);
+    max-height: 62vh;
+    overflow-y: auto;
+  }
+  .tabs[hidden] {
+    display: none;
+  }
+  .tab-filter input {
+    max-width: none;
+  }
+  /* stacked rows read better than wrapped chips in a narrow sheet */
+  .tab-group {
+    flex-direction: column;
+    align-items: stretch;
+    padding-left: 0;
+    gap: 2px;
+  }
+  .tab-group + .tab-group {
+    margin-top: 10px;
+  }
+  .tab-group-label {
+    position: static;
+    padding-bottom: 2px;
+  }
+  .tab {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 0;
+    text-align: left;
+  }
+}
+
 @media (max-width: 720px) {
   .chart-grid {
     grid-template-columns: 1fr;
@@ -744,10 +854,8 @@ input[type="range"] {
     width: 100%;
   }
   .tab {
-    flex: 1 1 auto;
-    text-align: center;
-    padding: 9px 8px;
-    font-size: 13px;
+    padding: 10px 10px;
+    font-size: 14px;
   }
   .slider-row {
     gap: 12px;
