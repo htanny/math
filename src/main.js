@@ -19,6 +19,7 @@ import { initNetView } from "./views/net.js";
 import { initSectionView } from "./views/section.js";
 import { initMotionView } from "./views/motion.js";
 import { initLinearView } from "./views/linear.js";
+import { initQuadraticView } from "./views/quadratic.js";
 import { initProbabilityView } from "./views/probability.js";
 import { initPythagorasView } from "./views/pythagoras.js";
 import { initConicView } from "./views/conic.js";
@@ -33,6 +34,7 @@ const VIEWS = [
   "section",
   "motion",
   "linear",
+  "quadratic",
   "probability",
   "inscribed",
   "pythagoras",
@@ -62,6 +64,7 @@ const registry = {
   section: initSectionView(),
   motion: initMotionView(),
   linear: initLinearView(),
+  quadratic: initQuadraticView(),
   probability: initProbabilityView(),
   inscribed: initInscribedView(),
   pythagoras: initPythagorasView(),
@@ -91,6 +94,38 @@ for (const name of VIEWS) {
 
 let active = null;
 
+/* ------------------------------------------------------------------- nav -- */
+
+const nav = document.getElementById("tabNav");
+const navToggle = document.getElementById("navToggle");
+const navCurrent = document.getElementById("navCurrent");
+const tabSearch = document.getElementById("tabSearch");
+const tabSearchEmpty = document.getElementById("tabSearchEmpty");
+
+/** Is the tab list currently collapsed behind the button? (phone widths only) */
+const isSheet = () => window.matchMedia("(max-width: 640px)").matches;
+
+function setNavOpen(open) {
+  nav.hidden = isSheet() ? !open : false;
+  navToggle.setAttribute("aria-expanded", String(open && isSheet()));
+}
+
+function applyFilter() {
+  const q = tabSearch.value.trim().toLowerCase();
+  let shown = 0;
+  for (const group of nav.querySelectorAll(".tab-group")) {
+    let hits = 0;
+    for (const tab of group.querySelectorAll(".tab")) {
+      const hit = !q || tab.textContent.toLowerCase().includes(q);
+      tab.hidden = !hit;
+      if (hit) hits++;
+    }
+    group.hidden = hits === 0;
+    shown += hits;
+  }
+  tabSearchEmpty.hidden = shown > 0;
+}
+
 function showView(name) {
   if (!VIEWS.includes(name)) name = DEFAULT_VIEW;
   if (name === active) return;
@@ -104,6 +139,7 @@ function showView(name) {
   }
 
   active = name;
+  navCurrent.textContent = tabs.get(name).textContent.trim();
   // The section is visible now, so canvases finally have a measurable size.
   if (registry[name].show) registry[name].show();
   registry[name].redraw();
@@ -114,8 +150,41 @@ for (const [name, tab] of tabs) {
     showView(name);
     if (history.replaceState) history.replaceState(null, "", `#${name}`);
     else location.hash = name;
+    if (isSheet()) setNavOpen(false);
   });
 }
+
+navToggle.addEventListener("click", () => {
+  const open = navToggle.getAttribute("aria-expanded") !== "true";
+  setNavOpen(open);
+  if (open) tabSearch.focus();
+});
+
+tabSearch.addEventListener("input", applyFilter);
+tabSearch.addEventListener("keydown", (evt) => {
+  if (evt.key !== "Enter") return;
+  // Enter on a filtered list picks the only remaining theme — the fast path
+  const left = [...nav.querySelectorAll(".tab")].filter((t) => !t.hidden);
+  if (left.length === 1) left[0].click();
+});
+
+document.addEventListener("keydown", (evt) => {
+  if (evt.key !== "Escape" || !isSheet()) return;
+  if (navToggle.getAttribute("aria-expanded") !== "true") return;
+  setNavOpen(false);
+  navToggle.focus();
+});
+
+document.addEventListener("pointerdown", (evt) => {
+  if (!isSheet() || navToggle.getAttribute("aria-expanded") !== "true") return;
+  if (nav.contains(evt.target) || navToggle.contains(evt.target)) return;
+  setNavOpen(false);
+});
+
+// crossing the breakpoint must not leave the list hidden on a wide screen
+window.matchMedia("(max-width: 640px)").addEventListener("change", () => {
+  setNavOpen(false);
+});
 
 window.addEventListener("hashchange", () => {
   showView(location.hash.replace(/^#/, ""));
@@ -156,4 +225,6 @@ window.addEventListener("resize", () => {
 /* ----------------------------------------------------------------- boot -- */
 
 applyThemeIcon();
+applyFilter();
+setNavOpen(false);
 showView(location.hash.replace(/^#/, "") || DEFAULT_VIEW);
