@@ -59,6 +59,8 @@
             <button type="button" class="tab" data-view="linear">一次関数と連立方程式</button>
             <button type="button" class="tab" data-view="quadratic">二次関数 y=ax²</button>
             <button type="button" class="tab" data-view="similar">相似と面積比・体積比</button>
+            <button type="button" class="tab" data-view="roots">平方根と数直線</button>
+            <button type="button" class="tab" data-view="expand">展開と因数分解</button>
             <button type="button" class="tab" data-view="probability">確率と大数の法則</button>
             <button type="button" class="tab" data-view="inscribed">円周角の定理</button>
             <button type="button" class="tab" data-view="pythagoras">三平方の定理</button>
@@ -980,6 +982,219 @@
               <table id="smSolidTable" class="data-table">
                 <thead>
                   <tr><th>立体</th><th>もとの体積</th><th>k 倍の体積</th><th>体積比</th><th>表面積比</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- ========================= 平方根と数直線 ========================= -->
+        <section class="view" data-view="roots" hidden>
+          <p class="subtitle">
+            √2 = 1.41421356… は答えではなく、答えの<strong>写し</strong>です。
+            本当のところは 2 つ —— √n は数直線上の決まった 1 点で
+            <strong>作図できる</strong>こと、そしてその位置は上と下から
+            <strong>いくらでも細かく挟める</strong>こと。どちらも図で見えます。（中3）
+          </p>
+
+          <section class="panel" aria-labelledby="sqSpiralHeading">
+            <h2 id="sqSpiralHeading">√n はここにある —— 渦巻きで作図する</h2>
+            <p class="panel-desc">
+              直角をはさむ辺が √k と 1 の直角三角形をつくると、斜辺は √(k+1)。
+              これを巻いていくと、√1・√2・√3 … が一度に全部手に入ります（テオドロスの渦巻き）。
+              長さをそのまま下の数直線へ倒しています。
+            </p>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>√<output id="sqNOut" class="mono">10</output> まで</span>
+                <input id="sqN" type="range" min="2" max="30" step="1" value="10" />
+              </label>
+              <label class="field field-inline checkbox-field">
+                <input id="sqLabels" type="checkbox" checked />
+                <span>√k の目もりを出す</span>
+              </label>
+              <button type="button" id="sqGrow" class="btn btn-primary">1 つずつ増やす</button>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="sqSpiralCanvas" aria-label="テオドロスの渦巻きと、長さを倒した数直線" role="img"></canvas>
+            </div>
+
+            <p id="sqSpiralNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">いちばん外の長さ</span>
+                <span id="sqOuter" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">a√b の形</span>
+                <span id="sqSurd" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">前の目もりとの間隔</span>
+                <span id="sqGap" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="sqSqueezeHeading">
+            <h2 id="sqSqueezeHeading">一桁ずつ挟んでいく</h2>
+            <p class="panel-desc">
+              二乗して n を超えない最大の小数が下から、その次が上からの見積もり。
+              一桁進むごとに、区間の幅はちょうど <code>1/10</code> になります。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <span class="preset-label">√n:</span>
+              <span id="sqPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>けた数 <output id="sqStageOut" class="mono">3</output></span>
+                <input id="sqStage" type="range" min="0" max="6" step="1" value="3" />
+              </label>
+            </div>
+
+            <div class="chart-wrap tall">
+              <canvas id="sqSqueezeCanvas" aria-label="数直線を段階ごとに拡大して、上下から挟んでいく図" role="img"></canvas>
+            </div>
+
+            <p id="sqSqueezeNote" class="note"></p>
+
+            <div class="table-wrap">
+              <table id="sqTable" class="data-table">
+                <thead>
+                  <tr><th>けた</th><th>下から</th><th>その二乗</th><th>上から</th><th>その二乗</th><th>幅</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- ======================= 展開と因数分解 ======================= -->
+        <section class="view" data-view="expand" hidden>
+          <p class="subtitle">
+            <code>(x + a)(x + b) = x² + (a + b)x + ab</code> は、覚える公式ではなく
+            <strong>長方形を 4 つに切っただけ</strong>です。
+            因数分解はその逆で、同じ絵を組み直すこと ——
+            「たして p、かけて q の 2 数」を探すのは、たてとよこを探しているのと同じです。（中3）
+          </p>
+
+          <section class="panel" aria-labelledby="exExpandHeading">
+            <h2 id="exExpandHeading">展開 —— 長方形を 4 つに切る</h2>
+            <p class="panel-desc">
+              たて <code>x + a</code>、よこ <code>x + b</code> の長方形です。
+              4 枚のタイルの面積を足すと、展開した式のそれぞれの項になります。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <span class="preset-label">形:</span>
+              <span id="exPatterns" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>a = <output id="exAOut" class="mono">2</output></span>
+                <input id="exA" type="range" min="0" max="6" step="1" value="2" />
+              </label>
+              <label class="field field-grow">
+                <span>b = <output id="exBOut" class="mono">3</output></span>
+                <input id="exB" type="range" min="0" max="6" step="1" value="3" />
+              </label>
+              <label class="field field-grow">
+                <span>x = <output id="exXOut" class="mono">4.0</output></span>
+                <input id="exX" type="range" min="1" max="8" step="0.1" value="4" />
+              </label>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>組みかえ（和と差の積のとき）= <output id="exMoveOut" class="mono">0.00</output></span>
+                <input id="exMove" type="range" min="0" max="1" step="0.01" value="0" />
+              </label>
+              <button type="button" id="exMovePlay" class="btn">切って移す</button>
+            </div>
+
+            <div class="chart-wrap square">
+              <canvas id="exCanvas" aria-label="たて x+a、よこ x+b の長方形を 4 つのタイルに分けた図" role="img"></canvas>
+            </div>
+
+            <p id="exNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">展開した式</span>
+                <span id="exPoly" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">長方形の面積</span>
+                <span id="exArea" class="stat-value">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">4 枚を足した面積</span>
+                <span id="exSum" class="stat-value">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">4 枚の内わけ</h3>
+            <ul id="exSteps" class="steps"></ul>
+          </section>
+
+          <section class="panel" aria-labelledby="exFactorHeading">
+            <h2 id="exFactorHeading">因数分解 —— 同じ絵を組み直す</h2>
+            <p class="panel-desc">
+              <code>x² + px + q</code> の長方形をつくるには、たてとよこを決めればよい。
+              4 枚のうち角のタイルが <code>q</code>、細長い 2 枚を合わせて <code>px</code> なので、
+              探すのは「たして p、かけて q」の 2 数です。
+            </p>
+
+            <div class="controls-row secondary-row">
+              <span class="preset-label">ためす:</span>
+              <span id="exFactorPresets" class="preset-chips"></span>
+            </div>
+
+            <div class="controls-row slider-row">
+              <label class="field field-grow">
+                <span>p = <output id="exPOut" class="mono">5</output></span>
+                <input id="exP" type="range" min="-12" max="12" step="1" value="5" />
+              </label>
+              <label class="field field-grow">
+                <span>q = <output id="exQOut" class="mono">6</output></span>
+                <input id="exQ" type="range" min="-24" max="24" step="1" value="6" />
+              </label>
+            </div>
+
+            <div class="chart-wrap">
+              <canvas id="exFactorCanvas" aria-label="因数分解した長方形の図" role="img"></canvas>
+            </div>
+
+            <p id="exFactorNote" class="note"></p>
+
+            <div class="stats-row">
+              <div class="stat-tile">
+                <span class="stat-label">もとの式</span>
+                <span id="exFactorFrom" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">因数分解</span>
+                <span id="exFactorTo" class="stat-value stat-value-sm">—</span>
+              </div>
+              <div class="stat-tile">
+                <span class="stat-label">候補の数</span>
+                <span id="exFactorCount" class="stat-value stat-value-sm">—</span>
+              </div>
+            </div>
+
+            <h3 class="sub-heading">かけて q になる組をならべる</h3>
+            <div class="table-wrap">
+              <table id="exFactorTable" class="data-table">
+                <thead>
+                  <tr><th>2 数</th><th>かけると</th><th>たすと</th><th></th></tr>
                 </thead>
                 <tbody></tbody>
               </table>
