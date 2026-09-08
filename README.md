@@ -298,6 +298,14 @@ m=2 でカージオイド、m=3 でネフロイドが現れ、m が1増えるご
   （円周角・複素数平面。図を Tab でフォーカスし、動かす点を選んで矢印キー）
 - 3D の図はドラッグのほか、フォーカスして矢印キーでも回せます（立体切断・円錐を切ると・相似）
 
+## つくり
+
+- ビューは開いたときに初めて読み込まれます（`import()` によるコード分割）。
+  27 個すべてを最初に読むと、中位のスマホで描画前に 144ms の初期化が要り、
+  そのうち 26 個は開かれていないタブのものでした
+- 3D の図（立体切断・展開図と立体・円錐を切ると・相似）は `src/scene3d.js` の
+  カメラを共有しています。以前は 4 つのビューがほぼ同じ投影を各自で持っていました
+
 ## 開発
 
 ```bash
@@ -322,6 +330,7 @@ npm test          # 検証スクリプトをすべて実行
 node scripts/verify-core.mjs         # 分数・円の面積・割合と速さ・確率・中心極限定理
 node scripts/verify-quadratic.mjs    # 変化の割合 a(p+q)、放物線と直線の交点、判別式、面積
 node scripts/verify-similar.mjs      # 拡大した図形が合同なピース k²/k³ 個で隙間なく埋まるか
+node scripts/verify-scene3d.mjs      # 3Dカメラ: 投影でゆがまないか、面の表裏判定、画面への収まり
 node scripts/verify-markup.mjs       # ビューが参照する id・aria の参照先・タブとビューの対応
 node scripts/verify-solids.mjs       # 展開図が閉じて V−E+F=2 になるか
 node scripts/verify-pythagoras.mjs   # 面積が全フレームで保たれるか

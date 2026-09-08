@@ -3,6 +3,7 @@ import {
   coneK, planeM, classify, criticalTilt, conicParams, sectionCurve3D,
   sectionCurvePlane, focalMeasure, KIND_LABEL, CONIC_PRESETS,
 } from "../conic.js";
+import { fitTo, makeCamera } from "../scene3d.js";
 
 const $ = (id) => document.getElementById(id);
 const TAU = Math.PI * 2;
@@ -10,38 +11,6 @@ const SMALL_FONT = "11px system-ui, -apple-system, 'Segoe UI', sans-serif";
 const LABEL_FONT = "13px system-ui, -apple-system, 'Segoe UI', sans-serif";
 const Z_LIMIT = 1.9;
 
-function makeCamera(az, el) {
-  const ce = Math.cos(el);
-  const se = Math.sin(el);
-  return (p) => {
-    const c = Math.cos(az);
-    const s = Math.sin(az);
-    const x = p[0] * c - p[1] * s;
-    const y = p[0] * s + p[1] * c;
-    return { x, y: -(y * se + p[2] * ce), depth: -y * ce + p[2] * se };
-  };
-}
-
-function fitter(points, project, width, height, pad) {
-  let lo = [Infinity, Infinity];
-  let hi = [-Infinity, -Infinity];
-  for (const p of points) {
-    const q = project(p);
-    lo[0] = Math.min(lo[0], q.x);
-    hi[0] = Math.max(hi[0], q.x);
-    lo[1] = Math.min(lo[1], q.y);
-    hi[1] = Math.max(hi[1], q.y);
-  }
-  const w = hi[0] - lo[0] || 1;
-  const h = hi[1] - lo[1] || 1;
-  const scale = Math.min((width - pad * 2) / w, (height - pad * 2) / h);
-  const ox = width / 2 - ((lo[0] + hi[0]) / 2) * scale;
-  const oy = height / 2 - ((lo[1] + hi[1]) / 2) * scale;
-  return (p) => {
-    const q = project(p);
-    return [ox + q.x * scale, oy + q.y * scale];
-  };
-}
 
 export function initConicView() {
   /* ------------------------------------------------------ panel 1: the cone -- */
@@ -83,7 +52,7 @@ export function initConicView() {
       "--text-primary", "--text-secondary", "--series-1", "--series-2", "--series-3", "--series-4",
     ]);
     const { k, m, c } = state();
-    const project = makeCamera((Number(spin.value) * Math.PI) / 180, elevation);
+    const cam = makeCamera((Number(spin.value) * Math.PI) / 180, elevation);
 
     const rim = (z) => {
       const r = k * Math.abs(z);
@@ -93,7 +62,7 @@ export function initConicView() {
       });
     };
     const gather = [...rim(Z_LIMIT), ...rim(-Z_LIMIT), [0, 0, 0]];
-    const map = fitter(gather, project, width, height, 30);
+    const map = fitTo(gather, cam, width, height, 30);
 
     const stroke = (pts, color, wdt, dash) => {
       ctx.strokeStyle = color;
