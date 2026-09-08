@@ -1,5 +1,6 @@
 import { readVars, setupCanvasDPR } from "../chart.js";
 import { SOLIDS, solidByKey, foldNet, faceNormal, solidCounts } from "../solids.js";
+import { makeCamera } from "../scene3d.js";
 
 const $ = (id) => document.getElementById(id);
 const LABEL_FONT = "13px system-ui, -apple-system, 'Segoe UI', sans-serif";
@@ -20,29 +21,13 @@ export function initNetView() {
   let key = SOLIDS[0].key;
   let raf = null;
 
-  /** Spin about the vertical axis, then a fixed camera elevation. */
-  function project(p, spin) {
-    const cs = Math.cos(spin);
-    const sn = Math.sin(spin);
-    const x = p[0] * cs - p[1] * sn;
-    const y = p[0] * sn + p[1] * cs;
-    const z = p[2];
-    const ce = Math.cos(ELEVATION);
-    const se = Math.sin(ELEVATION);
-    return {
-      x,
-      y: -(y * se + z * ce),
-      depth: -y * ce + z * se,
-    };
-  }
-
-  function fitOf(spec, t, spin, width, height) {
+  function fitOf(spec, t, cam, width, height) {
     const folded = foldNet(spec, t);
     let lo = [Infinity, Infinity];
     let hi = [-Infinity, -Infinity];
     for (const f of folded) {
       for (const p of f.pts) {
-        const q = project(p, spin);
+        const q = cam.project(p);
         lo[0] = Math.min(lo[0], q.x);
         hi[0] = Math.max(hi[0], q.x);
         lo[1] = Math.min(lo[1], q.y);
@@ -72,17 +57,20 @@ export function initNetView() {
     const t = Number(foldSlider.value);
     const spin = (Number(spinSlider.value) * Math.PI) / 180;
 
+    // one camera per frame, shared by the fit passes and the draw
+    const cam = makeCamera(spin, ELEVATION);
+
     // fit the flat net and the finished solid, then move between the two:
     // both ends fill the canvas and nothing jumps on the way
-    const f0 = fitOf(spec, 0, spin, width, height);
-    const f1 = fitOf(spec, 1, spin, width, height);
+    const f0 = fitOf(spec, 0, cam, width, height);
+    const f1 = fitOf(spec, 1, cam, width, height);
     const scale = f0.scale + (f1.scale - f0.scale) * t;
     const cx = f0.cx + (f1.cx - f0.cx) * t;
     const cy = f0.cy + (f1.cy - f0.cy) * t;
 
     const folded = foldNet(spec, t);
     const drawn = folded.map((f) => {
-      const pts = f.pts.map((p) => project(p, spin));
+      const pts = f.pts.map((p) => cam.project(p));
       const depth = pts.reduce((s, q) => s + q.depth, 0) / pts.length;
       return { ...f, pts, depth, normal: faceNormal(f.pts) };
     });

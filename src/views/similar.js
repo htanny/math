@@ -3,6 +3,7 @@ import {
   BOXES, FIGURES, SOLIDS, boxByKey, boxSurface, boxVolume, figureByKey,
   polyArea, ratios, scalePoly, tileBox,
 } from "../similar.js";
+import { fitTo, makeCamera } from "../scene3d.js";
 
 const $ = (id) => document.getElementById(id);
 const LABEL_FONT = "13px system-ui, -apple-system, 'Segoe UI', sans-serif";
@@ -169,16 +170,6 @@ export function initSimilarView() {
   let el = 0.5;
   let dragging = null;
 
-  function project(p) {
-    const ca = Math.cos(az);
-    const sa = Math.sin(az);
-    const x = p[0] * ca - p[1] * sa;
-    const y = p[0] * sa + p[1] * ca;
-    const ce = Math.cos(el);
-    const se = Math.sin(el);
-    return { x, y: -(y * se + p[2] * ce), depth: -y * ce + p[2] * se };
-  }
-
   /** The six faces of a box, as outward-wound quads. */
   function boxFaces(at, dims) {
     const [x, y, z] = at;
@@ -220,46 +211,37 @@ export function initSimilarView() {
     const size = box.dims.map((d) => d * k * (1 + spread));
     const shift = size.map((s) => -s / 2);
 
+    const cam = makeCamera(az, el);
+    const gathered = [];
     const faces = [];
     for (const cell of cells) {
       const at = [cell.at[0] + shift[0], cell.at[1] + shift[1], cell.at[2] + shift[2]];
       for (const f of boxFaces(at, cell.dims)) {
-        const q = f.pts.map(project);
         // only faces turned towards the camera; the rest are hidden anyway
-        if (project(f.n).depth <= 1e-9) continue;
-        const depth = q.reduce((s, p) => s + p.depth, 0) / q.length;
-        faces.push({ q, depth, n: f.n });
+        if (!cam.facing(f.n)) continue;
+        faces.push(f);
+        gathered.push(...f.pts);
       }
     }
     if (!faces.length) return;
-    faces.sort((a, b) => a.depth - b.depth);
 
-    let lo = [Infinity, Infinity];
-    let hi = [-Infinity, -Infinity];
-    for (const f of faces) {
-      for (const p of f.q) {
-        lo[0] = Math.min(lo[0], p.x);
-        hi[0] = Math.max(hi[0], p.x);
-        lo[1] = Math.min(lo[1], p.y);
-        hi[1] = Math.max(hi[1], p.y);
-      }
-    }
-    const pad = 30;
-    const scale = Math.min((width - pad * 2) / (hi[0] - lo[0] || 1),
-                           (height - pad * 2 - 16) / (hi[1] - lo[1] || 1));
-    const ox = width / 2 - ((lo[0] + hi[0]) / 2) * scale;
-    const oy = height / 2 - ((lo[1] + hi[1]) / 2) * scale;
+    // fit inside the frame less the caption band at the foot
+    const map = fitTo(gathered, cam, width, height - 16, 30);
+    const drawn = faces
+      .map((f) => {
+        const q = f.pts.map(map);
+        return { q, n: f.n, depth: q.reduce((s, p) => s + p[2], 0) / q.length };
+      })
+      .sort((a, b) => a.depth - b.depth);
 
     // One hue, three shades for the three directions a face can point. Each
     // face is laid over an opaque ground first: painted with alpha alone the
     // stack turns into glass and you see the cubes behind, which is the one
     // thing this picture must not look like.
     const shade = (n) => (n[2] !== 0 ? 0.72 : n[1] !== 0 ? 0.5 : 0.3);
-    for (const f of faces) {
+    for (const f of drawn) {
       ctx.beginPath();
-      f.q.forEach((p, i) => {
-        const x = ox + p.x * scale;
-        const y = oy + p.y * scale;
+      f.q.forEach(([x, y], i) => {
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
